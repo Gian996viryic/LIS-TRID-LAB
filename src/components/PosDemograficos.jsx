@@ -8,7 +8,7 @@ export default function PosDemograficos({
   registroTipoOrden, setRegistroTipoOrden, registroProcedencia, handleProcedenciaChange,
   registroCodigoConvenio, handleCodigoConvenioChange, nombreConvenio,
   registroDoctor, setRegistroDoctor, registroObservacion, setRegistroObservacion,
-  registroDireccion, setRegistroDireccion, registroCiudad, setRegistroCiudad // <-- Asegurados los nuevos props
+  registroDireccion, setRegistroDireccion, registroCiudad, setRegistroCiudad
 }) {
   return (
     <div style={{ flex: "1 1 45%" }}>
@@ -30,7 +30,7 @@ export default function PosDemograficos({
                   placeholder="10 dígitos" 
                   maxLength={10} 
                 />
-                <button type="button" onClick={consultarRegistroCivil} disabled={buscandoCedula} style={{ backgroundColor: "#0284c7", color: "#fff", border: "1px solid #0284c7", borderTopRightRadius: "3px", borderBottomRightRadius: "3px", padding: "0 10px", height: "26px", cursor: "pointer" }}>{buscandoCedula ? "⏳" : "🔍"}</button>
+                <button type="button" onClick={consultarRegistroCivil} disabled={buscandoCedula} style={{ backgroundColor: "#0284c7", color: "#fff", border: "1px solid #0284c7", borderTopRightRadius: "3px", borderBottomRightRadius: "3px", padding: "0 10px", height: "26px", cursor: "pointer" }}>{buscandoCedula ? "..." : "Buscar"}</button>
               </div>
             </div>
             <div>
@@ -53,11 +53,26 @@ export default function PosDemograficos({
           <div style={{ display: "flex", gap: "15px" }}>
             <div style={{ flex: 1 }}>
               <label style={{ fontSize: "11px", color: "#555", display: "block", marginBottom: "4px" }}>WhatsApp</label>
-              <input className="lis-input" style={{ width: "100%", height: "26px", padding: "4px 8px", border: "1px solid #9ca3af", borderRadius: "4px", backgroundColor: (buscandoCedula || registroProcedencia === "CONVENIO") ? "#f3f4f6" : "#fff" }} value={registroTelefono} onChange={(e) => setRegistroTelefono(e.target.value)} placeholder={registroProcedencia === "CONVENIO" ? "Dato del convenio" : "Ej: 0991234567"} disabled={buscandoCedula || registroProcedencia === "CONVENIO"} />
+              <input 
+                className="lis-input" 
+                style={{ width: "100%", height: "26px", padding: "4px 8px", border: "1px solid #9ca3af", borderRadius: "4px", backgroundColor: (buscandoCedula || registroProcedencia === "CONVENIO") ? "#f3f4f6" : "#fff", color: registroProcedencia === "CONVENIO" ? "#6b7280" : "#000" }} 
+                value={registroProcedencia === "CONVENIO" ? "Dato del convenio" : registroTelefono} 
+                onChange={(e) => setRegistroTelefono(e.target.value)} 
+                placeholder="Ej: 0991234567" 
+                disabled={buscandoCedula || registroProcedencia === "CONVENIO"} 
+              />
             </div>
             <div style={{ flex: 1 }}>
               <label style={{ fontSize: "11px", color: "#555", display: "block", marginBottom: "4px" }}>Correo Electrónico</label>
-              <input type="email" className="lis-input" style={{ width: "100%", height: "26px", padding: "4px 8px", border: "1px solid #9ca3af", borderRadius: "4px", backgroundColor: (buscandoCedula || registroProcedencia === "CONVENIO") ? "#f3f4f6" : "#fff" }} value={registroCorreo} onChange={e => setRegistroCorreo(e.target.value)} placeholder={registroProcedencia === "CONVENIO" ? "Dato del convenio" : "ejemplo@correo.com"} disabled={buscandoCedula || registroProcedencia === "CONVENIO"} />
+              <input 
+                type="email" 
+                className="lis-input" 
+                style={{ width: "100%", height: "26px", padding: "4px 8px", border: "1px solid #9ca3af", borderRadius: "4px", backgroundColor: (buscandoCedula || registroProcedencia === "CONVENIO") ? "#f3f4f6" : "#fff", color: registroProcedencia === "CONVENIO" ? "#6b7280" : "#000" }} 
+                value={registroProcedencia === "CONVENIO" ? "Dato del convenio" : registroCorreo} 
+                onChange={e => setRegistroCorreo(e.target.value)} 
+                placeholder="ejemplo@correo.com" 
+                disabled={buscandoCedula || registroProcedencia === "CONVENIO"} 
+              />
             </div>
           </div>
         </div>
@@ -87,7 +102,6 @@ export default function PosDemograficos({
             </div>
           )}
 
-          {/* 👇 AQUÍ ESTÁ EL CAMBIO SOLICITADO: DOCTOR, DIRECCIÓN Y CIUDAD EN UNA FILA 👇 */}
           <div style={{ display: "flex", width: "100%", gap: "10px", marginTop: "4px" }}>
             
             <div style={{ flex: "2" }}>
@@ -97,16 +111,29 @@ export default function PosDemograficos({
             
             <div style={{ flex: "2" }}>
                <label style={{ fontSize: "11px", color: "#555", display: "block", marginBottom: "4px" }}>Dirección</label>
-               <input className="lis-input" style={{ width: "100%", height: "26px", padding: "4px 8px", border: "1px solid #9ca3af", borderRadius: "4px" }} placeholder="Ej: Suburbio" value={registroDireccion} onChange={e=>setRegistroDireccion(e.target.value.toUpperCase())} />
+               <input 
+                 className="lis-input" 
+                 style={{ width: "100%", height: "26px", padding: "4px 8px", border: "1px solid #9ca3af", borderRadius: "4px", backgroundColor: (buscandoCedula || registroProcedencia === "CONVENIO") ? "#f3f4f6" : "#fff", color: registroProcedencia === "CONVENIO" ? "#6b7280" : "#000" }} 
+                 placeholder="Ej: Suburbio" 
+                 value={registroProcedencia === "CONVENIO" ? "Dato del convenio" : registroDireccion} 
+                 onChange={e=>setRegistroDireccion(e.target.value.toUpperCase())} 
+                 disabled={buscandoCedula || registroProcedencia === "CONVENIO"}
+               />
             </div>
 
             <div style={{ flex: "1.5" }}>
                <label style={{ fontSize: "11px", color: "#555", display: "block", marginBottom: "4px" }}>Ciudad</label>
-               <input className="lis-input" style={{ width: "100%", height: "26px", padding: "4px 8px", border: "1px solid #9ca3af", borderRadius: "4px" }} value={registroCiudad} onChange={e=>setRegistroCiudad(e.target.value.toUpperCase())} />
+               <input 
+                 className="lis-input" 
+                 style={{ width: "100%", height: "26px", padding: "4px 8px", border: "1px solid #9ca3af", borderRadius: "4px", backgroundColor: (buscandoCedula || registroProcedencia === "CONVENIO") ? "#f3f4f6" : "#fff", color: registroProcedencia === "CONVENIO" ? "#6b7280" : "#000" }} 
+                 placeholder="GUAYAQUIL"
+                 value={registroProcedencia === "CONVENIO" ? "Dato del convenio" : registroCiudad} 
+                 onChange={e=>setRegistroCiudad(e.target.value.toUpperCase())} 
+                 disabled={buscandoCedula || registroProcedencia === "CONVENIO"}
+               />
             </div>
             
           </div>
-          {/* 👆 FIN DEL CAMBIO 👆 */}
 
         </div>
       </fieldset>
