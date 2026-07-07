@@ -11,7 +11,6 @@ export default function ModalCertificadoAsistencia({ orden, onClose }) {
 
   useEffect(() => {
     async function fetchUsuarios() {
-      // Traemos a los usuarios para que elijas quién firma
       const { data, error } = await supabase
         .from("lab_usuarios")
         .select("id, nombre, registro_senescyt, cargo, firma_path")
@@ -31,17 +30,15 @@ export default function ModalCertificadoAsistencia({ orden, onClose }) {
     
     const responsableSeleccionado = usuarios.find(u => u.id === responsableId);
     
-    // Armamos los datos del paciente desde la orden seleccionada
     const datosPaciente = {
       nombre: orden.paciente_nombre,
       cedula: orden.paciente_cedula
     };
 
-    // Armamos los datos del firmante
+    // CORRECCIÓN: Mandamos el dato con su nombre correcto
     const datosResponsable = {
       nombre: responsableSeleccionado.nombre,
-      // Usamos el registro senescyt como su identificación, o un texto por defecto
-      cedula: responsableSeleccionado.registro_senescyt || "S/N" 
+      registro_senescyt: responsableSeleccionado.registro_senescyt || "S/N" 
     };
 
     const toastId = toast.loading("Generando certificado...");
@@ -49,7 +46,7 @@ export default function ModalCertificadoAsistencia({ orden, onClose }) {
       const pdfBlob = await generarPDFCertificadoAsistencia(datosPaciente, datosResponsable);
       saveAs(pdfBlob, `Certificado_Asistencia_${orden.paciente_cedula || orden.codigo_orden}.pdf`);
       toast.success("¡Certificado descargado con éxito!", { id: toastId });
-      onClose(); // Cerramos el modal
+      onClose(); 
     } catch (error) {
       toast.error("Error al generar: " + error.message, { id: toastId });
     }
@@ -59,13 +56,11 @@ export default function ModalCertificadoAsistencia({ orden, onClose }) {
     <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", backgroundColor: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
       <div style={{ background: "#f8fafc", border: "1px solid #999", width: "450px", borderRadius: "6px", overflow: "hidden", boxShadow: "0 10px 25px rgba(0,0,0,0.5)" }}>
         
-        {/* Cabecera del Modal */}
         <div style={{ background: "#4f46e5", color: "#fff", padding: "10px 16px", fontWeight: "bold", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <span>📄 Emitir Certificado de Asistencia</span>
           <button onClick={onClose} style={{ background: "transparent", border: "none", color: "#fff", cursor: "pointer", fontWeight: "bold", fontSize: "16px" }}>✕</button>
         </div>
         
-        {/* Cuerpo del Modal */}
         <div style={{ padding: "20px" }}>
           
           <div style={{ marginBottom: "15px", padding: "10px", background: "#e0e7ff", border: "1px dashed #6366f1", borderRadius: "4px" }}>
@@ -92,7 +87,6 @@ export default function ModalCertificadoAsistencia({ orden, onClose }) {
             </select>
           )}
 
-          {/* Botonera */}
           <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "25px" }}>
             <button 
               type="button" 
