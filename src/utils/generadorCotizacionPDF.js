@@ -114,8 +114,8 @@ export async function generarPDFCotizacion(datos) {
   doc.text(`Sexo: ${sexoLbl}`, 40, textY + lh*3);
   doc.text(`Email: ${paciente.correo || "N/A"}`, 40, textY + lh*4);
 
-  doc.text(`Dirección: N/A`, 300, textY);
-  doc.text(`Ciudad: GUAYAQUIL`, 300, textY + lh);
+  doc.text(`Dirección: ${datosPDF.paciente.direccion || 'N/A'}`, x, y);
+  doc.text(`Ciudad: ${datosPDF.paciente.ciudad || 'GUAYAQUIL'}`, x, y);
   doc.text(`Teléfono: ${paciente.telefono || "N/A"}`, 300, textY + lh*2);
   doc.text(`Doctor: ${paciente.doctor || "PARTICULAR"}`, 300, textY + lh*3);
 
