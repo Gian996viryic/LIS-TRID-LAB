@@ -8,6 +8,7 @@ import ModalCobro from "./ModalCobro";
 import ModalEdicion from "./ModalEdicion";
 import ModalBuscadorPaciente from "./ModalBuscadorPaciente"; 
 import ModalHojaTrabajo from "./ModalHojaTrabajo"; 
+import ModalCertificadoAsistencia from "./ModalCertificadoAsistencia"; // 🚀 NUEVO IMPORT
 
 export function asignarAreaY_Tubo(grupo, examen) {
   const g = (grupo || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase(); 
@@ -47,7 +48,6 @@ export default function LabOrdenes({ rol }) {
   const [ordenSeleccionada, setOrdenSeleccionada] = useState(null); 
   const [idsPendientes, setIdsPendientes] = useState([]); 
   
-  // 🚀 ESTADO PARA EL MODO "SOLO PENDIENTES"
   const [modoSoloPendientes, setModoSoloPendientes] = useState(true);
 
   const [listaConvenios, setListaConvenios] = useState([]);
@@ -58,6 +58,10 @@ export default function LabOrdenes({ rol }) {
   const [ordenCobro, setOrdenCobro] = useState(null);
   const [showHojaTrabajo, setShowHojaTrabajo] = useState(false); 
   const [showBuscadorPaciente, setShowBuscadorPaciente] = useState(false); 
+
+  // 🚀 NUEVOS ESTADOS PARA EL CERTIFICADO
+  const [showCertificado, setShowCertificado] = useState(false);
+  const [ordenCertificado, setOrdenCertificado] = useState(null);
 
   const [showUsuarios, setShowUsuarios] = useState(false);
   const [listaUsuarios, setListaUsuarios] = useState([]);
@@ -181,6 +185,16 @@ export default function LabOrdenes({ rol }) {
     } else toast("Selecciona una orden.", { icon: "ℹ️" });
   }
 
+  // 🚀 NUEVA FUNCIÓN PARA ABRIR CERTIFICADO
+  function abrirModalCertificado() {
+    const seleccionada = document.querySelector('input[name="ordencheck"]:checked');
+    if (seleccionada) {
+      const ord = ordenes.find(o => String(o.id) === seleccionada.value);
+      setOrdenCertificado(ord);
+      setShowCertificado(true);
+    } else toast("Selecciona una orden para generar el certificado.", { icon: "ℹ️" });
+  }
+
   function fmtDateGrid(v) {
     if (!v) return "";
     try { const d = new Date(v); const pad = (n) => String(n).padStart(2, "0"); return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`; } catch { return String(v); }
@@ -222,7 +236,6 @@ export default function LabOrdenes({ rol }) {
     );
   }
 
-  // 🚀 LÓGICA DE COLA MEJORADA (RESPETA EL SWITCH DE SOLO PENDIENTES)
   function abrirValidacionEnCola() {
     let colaParaRevisar = [];
     
@@ -416,7 +429,6 @@ export default function LabOrdenes({ rol }) {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <div style={{ display: "flex", gap: "12px" }}>
               
-              {/* 🚀 CAJA DE HERRAMIENTAS: VALIDACIÓN / COLA */}
               <fieldset style={{ border: "1px solid #9ca3af", padding: "4px 8px 8px 8px", margin: 0, background: "#e5e7eb", display: "flex", flexDirection: "column", gap: "6px" }}>
                 <legend style={{ fontSize: "11px", color: "#555", padding: "0 4px" }}>Validación / Cola</legend>
                 
@@ -459,6 +471,9 @@ export default function LabOrdenes({ rol }) {
 
                   <button className="lis-btn" style={{ background: "#0ea5e9", color: "white", borderColor: "#0284c7", fontWeight: "bold" }} onClick={() => setShowNuevaPeticion(true)}>➕ Nueva Petición (Caja)</button>
                   <button className="lis-btn" style={{ background: "#d97706", color: "white", borderColor: "#b45309", fontWeight: "bold" }} onClick={abrirModalCobro}>💰 Cobrar Saldo</button>
+                  
+                  {/* 🚀 NUEVO BOTÓN PARA CERTIFICADO DE ASISTENCIA */}
+                  <button className="lis-btn" style={{ background: "#4f46e5", color: "white", borderColor: "#4338ca", fontWeight: "bold" }} onClick={abrirModalCertificado}>📄 Certificado</button>
                 </>
               )}
               
@@ -469,6 +484,7 @@ export default function LabOrdenes({ rol }) {
         </div>
       </div>
 
+      {/* MODALES REUTILIZABLES */}
       {showUsuarios && (
         <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", backgroundColor: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
           <div style={{ background: "#f0f0f0", border: "1px solid #999", width: "1000px", boxShadow: "0 4px 20px rgba(0,0,0,0.4)" }}>
@@ -538,6 +554,14 @@ export default function LabOrdenes({ rol }) {
       {ordenRegistro && <ModalEdicion ordenRegistro={ordenRegistro} onClose={() => setOrdenRegistro(null)} onSuccess={cargarOrdenesPaginadasServidor} listaConvenios={listaConvenios} />}
       {showBuscadorPaciente && <ModalBuscadorPaciente onClose={() => setShowBuscadorPaciente(false)} />}
       {showHojaTrabajo && <ModalHojaTrabajo isOpen={showHojaTrabajo} onClose={() => setShowHojaTrabajo(false)} ordenes={ordenes} areaActiva={areaActiva} filtroPrueba={"TODAS"} />}
+      
+      {/* 🚀 AQUÍ SE RENDERIZA EL NUEVO MODAL DEL CERTIFICADO */}
+      {showCertificado && ordenCertificado && (
+        <ModalCertificadoAsistencia 
+          orden={ordenCertificado} 
+          onClose={() => { setShowCertificado(false); setOrdenCertificado(null); }} 
+        />
+      )}
     </div>
   );
 }
