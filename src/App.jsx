@@ -170,7 +170,7 @@ function AdminPortal() {
     setEnviandoCorreo(true);
     
     const { error } = await supabase.auth.resetPasswordForEmail(recuperarEmail, {
-      redirectTo: "https://lis-tridlab.vercel.app/intranet-trd", // <--- RUTA CORRECTA
+      redirectTo: lis-tridlab.vercel.app + "/intranet-trd", // <--- RUTA CORRECTA
     });
 
     if (error) {
