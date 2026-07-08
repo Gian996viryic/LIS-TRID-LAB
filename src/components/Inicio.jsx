@@ -267,7 +267,37 @@ export default function Inicio() {
               </div>
 
               <div style={{ background: theme.card, backdropFilter: "blur(5px)", padding: "30px", borderRadius: "20px", border: "1px solid rgba(255,255,255,0.05)" }}>
-                <form onSubmit={(e) => { e.preventDefault(); alert("¡Mensaje enviado correctamente! Nos pondremos en contacto pronto."); setFormContacto({nombre:"", correo:"", mensaje:""}); }}>
+                <form onSubmit={async (e) => { 
+                  e.preventDefault(); 
+                  
+                  try {
+                    const respuesta = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json"
+                      },
+                      body: JSON.stringify({
+                        service_id: "service_cbxm29h",
+                        template_id: "template_qrgmvtc", 
+                        user_id: "UKANIhXTZLFz73ikU",
+                        template_params: {
+                          name: formContacto.nombre,       
+                          email: formContacto.correo,      
+                          message: formContacto.mensaje    
+                        }
+                      })
+                    });
+
+                    if (respuesta.ok) {
+                      alert("Mensaje enviado correctamente. Nos pondremos en contacto pronto."); 
+                      setFormContacto({nombre:"", correo:"", mensaje:""});
+                    } else {
+                      alert("Hubo un problema al enviar el mensaje. Inténtelo más tarde.");
+                    }
+                  } catch (error) {
+                    alert("Error de conexión. Por favor, revise su red.");
+                  }
+                }}>
                   <label style={{ fontSize: "12px", color: theme.textSecondary, marginBottom: "5px", display: "block" }}>Nombre Completo</label>
                   <input type="text" className="contact-input" required value={formContacto.nombre} onChange={e => setFormContacto({...formContacto, nombre: e.target.value})} placeholder="Ej. Ana Pérez" />
 

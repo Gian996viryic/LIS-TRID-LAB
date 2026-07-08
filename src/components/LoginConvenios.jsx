@@ -32,7 +32,6 @@ export default function LoginConvenios({ onLoginSuccess }) {
         })
         .maybeSingle();
 
-      // 🔍 DETECTOR DE ERRORES REALES
       if (error) {
         toast.error("Error de Base de Datos: " + error.message, { id: toastId });
         setCargando(false);
@@ -45,20 +44,17 @@ export default function LoginConvenios({ onLoginSuccess }) {
         return;
       }
 
-      // 2. LUEGO VERIFICAMOS SI ESTÁ ACTIVO
       if (!data.activo) {
         toast.error("Este convenio se encuentra inactivo.", { id: toastId });
         setCargando(false);
         return;
       }
 
-      // 3. SI TODO ESTÁ BIEN, CREAMOS EL AUTHDATA INCLUYENDO EL PIN
       toast.success(`Bienvenido, ${data.nombre}`, { id: toastId });
       
       const authData = { id: data.id, nombre: data.nombre, pin_secreto: pinSecreto.trim() };
       localStorage.setItem("tridlab_convenio_auth", JSON.stringify(authData));
       
-      // Notificamos a App.jsx que el login fue exitoso
       setTimeout(() => {
         onLoginSuccess(authData);
         setCargando(false);
@@ -74,7 +70,7 @@ export default function LoginConvenios({ onLoginSuccess }) {
     e.preventDefault(); 
     
     if (!nombreRecuperacion || nombreRecuperacion.trim() === "") {
-      toast.error("Por favor, ingresa un nombre válido.");
+      toast.error("Por favor, ingresa un dato válido.");
       return;
     }
 
@@ -82,25 +78,43 @@ export default function LoginConvenios({ onLoginSuccess }) {
     const toastId = toast.loading("Buscando institución...");
 
     try {
-      const { data, error } = await supabase
+      const valorBusqueda = nombreRecuperacion.trim();
+      
+      // 1. Primero intentamos buscar asumiendo que el usuario ingresó un CORREO
+      // Usamos .ilike() para que no importe si usa mayúsculas o minúsculas
+      let { data, error } = await supabase
         .from("lab_convenios")
         .select("correo, codigo_secreto")
-        .eq("nombre", nombreRecuperacion.trim())
-        .single();
+        .ilike("correo", valorBusqueda)
+        .maybeSingle();
 
+      // 2. Si la consulta anterior no encontró nada, intentamos buscar por NOMBRE
+      if (!data) {
+        const { data: dataNombre, error: errorNombre } = await supabase
+          .from("lab_convenios")
+          .select("correo, codigo_secreto")
+          .ilike("nombre", valorBusqueda)
+          .maybeSingle();
+          
+        data = dataNombre;
+        if (errorNombre) error = errorNombre;
+      }
+
+      // Manejo de errores después de los dos intentos
       if (error) {
         console.error("Error Supabase:", error);
         throw new Error("Error con la base de datos registrado.");
       }
       
       if (!data) {
-        throw new Error("Institución no encontrada.");
+        throw new Error("No encontramos ninguna institución con ese nombre o correo.");
       }
 
       if (!data.correo) {
-        throw new Error("Esta institución no tiene un correo registrado.");
+        throw new Error("Esta institución no tiene un correo registrado en el sistema.");
       }
 
+      // Preparar y enviar el correo con EmailJS
       const templateParams = {
         to_email: data.correo,
         pin_secreto: data.codigo_secreto
@@ -108,12 +122,12 @@ export default function LoginConvenios({ onLoginSuccess }) {
 
       await emailjs.send(
         'service_hpxbhkr',
-        'template_lmjsxix', // Verifica que este ID sea el correcto de tu EmailJS
+        'template_lmjsxlx', 
         templateParams,
         'UKANIhXTZLFz73ikU'
       );
 
-      toast.success("PIN enviado exitosamente.", { id: toastId });
+      toast.success("PIN enviado exitosamente a su correo.", { id: toastId });
       setShowModalRecuperar(false);
       setNombreRecuperacion("");
 
@@ -128,7 +142,6 @@ export default function LoginConvenios({ onLoginSuccess }) {
   return (
     <div className="login-convenios-container">
       
-      {/* 🚀 INICIO DE LA IMAGEN DE FONDO DIFUMINADA */}
       <div style={{
         position: "absolute",
         top: 0, left: 0, right: 0, bottom: 0,
@@ -140,14 +153,12 @@ export default function LoginConvenios({ onLoginSuccess }) {
         zIndex: 1
       }} />
       
-      {/* 🚀 CAPA OSCURA PARA MEJORAR EL CONTRASTE DE LA TARJETA */}
       <div style={{
         position: "absolute",
         top: 0, left: 0, right: 0, bottom: 0,
         backgroundColor: "rgba(10, 5, 20, 0.6)",
         zIndex: 2
       }} />
-      {/* FIN DEL FONDO */}
 
       <Toaster position="top-center" />
       <style>{`
@@ -333,7 +344,7 @@ export default function LoginConvenios({ onLoginSuccess }) {
               <span onClick={() => setShowModalRecuperar(false)} style={{ cursor: 'pointer', color: '#64748b', fontSize: '18px' }}>✕</span>
             </div>
             <p style={{ color: '#94a3b8', fontSize: '12px', marginBottom: '20px', lineHeight: '1.4' }}>
-              Ingrese el nombre exacto de su Laboratorio u hospital registrado. Le enviaremos su PIN de acceso al correo institucional asociado.
+              Ingrese el <strong>correo electrónico</strong> o el <strong>nombre exacto</strong> de su institución. Le enviaremos su PIN de acceso.
             </p>
             
             <form onSubmit={solicitarRecuperacionPin}>
@@ -341,7 +352,7 @@ export default function LoginConvenios({ onLoginSuccess }) {
                 type="text" 
                 className="b2b-input" 
                 style={{ paddingLeft: '16px', paddingRight: '16px', marginBottom: '15px' }}
-                placeholder="Nombre del Laboratorio u Hospital" 
+                placeholder="Ej: clinica@correo.com o Clínica San Juan" 
                 value={nombreRecuperacion} 
                 onChange={(e) => setNombreRecuperacion(e.target.value)} 
                 required 
