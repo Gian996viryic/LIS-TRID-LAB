@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import ReCAPTCHA from "react-google-recaptcha";
 
 export default function Inicio() {
   const navigate = useNavigate();
@@ -7,6 +8,10 @@ export default function Inicio() {
 
   // Formulario de contacto
   const [formContacto, setFormContacto] = useState({ nombre: "", correo: "", mensaje: "" });
+  
+  // Estados para el CAPTCHA y el envío
+  const [mostrarCaptcha, setMostrarCaptcha] = useState(false);
+  const [enviando, setEnviando] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -32,6 +37,44 @@ export default function Inicio() {
     }
   };
 
+  // Función que se ejecuta solo tras resolver el CAPTCHA
+  const procesarEnvioFinal = async (captchaToken) => {
+    if (!captchaToken) return; 
+    
+    setEnviando(true);
+    try {
+      const respuesta = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          service_id: "service_cbxm29h",
+          template_id: "template_qrgmvtc", 
+          user_id: "UKANIhXTZLFz73ikU",
+          template_params: {
+            name: formContacto.nombre,       
+            email: formContacto.correo,      
+            message: formContacto.mensaje,
+            "g-recaptcha-response": captchaToken
+          }
+        })
+      });
+
+      if (respuesta.ok) {
+        alert("Mensaje enviado correctamente. Nos pondremos en contacto pronto."); 
+        setFormContacto({nombre:"", correo:"", mensaje:""});
+        setMostrarCaptcha(false);
+      } else {
+        alert("Hubo un problema al enviar el mensaje. Inténtelo más tarde.");
+      }
+    } catch (error) {
+      alert("Error de conexión. Por favor, revise su red.");
+    } finally {
+      setEnviando(false);
+    }
+  };
+
   return (
     <div style={{ backgroundColor: "transparent", fontFamily: "'Segoe UI', Roboto, sans-serif", color: theme.textPrimary, width: "100%", display: "flex", flexDirection: "column", minHeight: "100vh" }}>
       
@@ -44,7 +87,7 @@ export default function Inicio() {
         backgroundPosition: "center",
         filter: "blur(8px)",
         transform: "scale(1.1)", 
-        zIndex: 0 /* ✅ SOLUCIÓN: Cambiado a 0 para que no se oculte tras el fondo global */
+        zIndex: 0 
       }} />
       
       {/* 🚀 CAPA OSCURA PARA MEJORAR EL CONTRASTE DE LAS LETRAS */}
@@ -52,7 +95,7 @@ export default function Inicio() {
         position: "fixed",
         top: 0, left: 0, right: 0, bottom: 0,
         backgroundColor: "rgba(10, 5, 20, 0.75)",
-        zIndex: 1 /* ✅ SOLUCIÓN: Capa oscura en nivel 1 */
+        zIndex: 1 
       }} />
 
       {/* 🚀 CONTENEDOR PRINCIPAL (TODO EL CONTENIDO VA SOBRE EL FONDO) */}
@@ -85,6 +128,7 @@ export default function Inicio() {
             outline: none; transition: border-color 0.3s;
           }
           .contact-input:focus { border-color: #06b6d4; background: rgba(255,255,255,0.1); }
+          .contact-input:disabled { opacity: 0.6; cursor: not-allowed; }
         `}</style>
 
         {/* 🟢 NAVBAR FIJA */}
@@ -267,49 +311,50 @@ export default function Inicio() {
               </div>
 
               <div style={{ background: theme.card, backdropFilter: "blur(5px)", padding: "30px", borderRadius: "20px", border: "1px solid rgba(255,255,255,0.05)" }}>
-                <form onSubmit={async (e) => { 
-                  e.preventDefault(); 
-                  
-                  try {
-                    const respuesta = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json"
-                      },
-                      body: JSON.stringify({
-                        service_id: "service_cbxm29h",
-                        template_id: "template_qrgmvtc", 
-                        user_id: "UKANIhXTZLFz73ikU",
-                        template_params: {
-                          name: formContacto.nombre,       
-                          email: formContacto.correo,      
-                          message: formContacto.mensaje    
-                        }
-                      })
-                    });
-
-                    if (respuesta.ok) {
-                      alert("Mensaje enviado correctamente. Nos pondremos en contacto pronto."); 
-                      setFormContacto({nombre:"", correo:"", mensaje:""});
-                    } else {
-                      alert("Hubo un problema al enviar el mensaje. Inténtelo más tarde.");
-                    }
-                  } catch (error) {
-                    alert("Error de conexión. Por favor, revise su red.");
-                  }
-                }}>
+                <form onSubmit={(e) => e.preventDefault()}>
                   <label style={{ fontSize: "12px", color: theme.textSecondary, marginBottom: "5px", display: "block" }}>Nombre Completo</label>
-                  <input type="text" className="contact-input" required value={formContacto.nombre} onChange={e => setFormContacto({...formContacto, nombre: e.target.value})} placeholder="Ej. Ana Pérez" />
+                  <input type="text" className="contact-input" required value={formContacto.nombre} onChange={e => setFormContacto({...formContacto, nombre: e.target.value})} placeholder="Ej. Ana Pérez" disabled={mostrarCaptcha} />
 
                   <label style={{ fontSize: "12px", color: theme.textSecondary, marginBottom: "5px", display: "block" }}>Correo Electrónico</label>
-                  <input type="email" className="contact-input" required value={formContacto.correo} onChange={e => setFormContacto({...formContacto, correo: e.target.value})} placeholder="ejemplo@correo.com" />
+                  <input type="email" className="contact-input" required value={formContacto.correo} onChange={e => setFormContacto({...formContacto, correo: e.target.value})} placeholder="ejemplo@correo.com" disabled={mostrarCaptcha} />
 
                   <label style={{ fontSize: "12px", color: theme.textSecondary, marginBottom: "5px", display: "block" }}>¿En qué podemos ayudarte?</label>
-                  <textarea className="contact-input" required value={formContacto.mensaje} onChange={e => setFormContacto({...formContacto, mensaje: e.target.value})} rows="4" placeholder="Escribe tu mensaje aquí..." style={{ resize: "none" }}></textarea>
+                  <textarea className="contact-input" required value={formContacto.mensaje} onChange={e => setFormContacto({...formContacto, mensaje: e.target.value})} rows="4" placeholder="Escribe tu mensaje aquí..." style={{ resize: "none" }} disabled={mostrarCaptcha}></textarea>
 
-                  <button type="submit" className="hover-btn" style={{ width: "100%", padding: "14px", background: theme.accentGrad, color: "#fff", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", marginTop: "10px" }}>
-                    Enviar Mensaje
-                  </button>
+                  {!mostrarCaptcha ? (
+                    <button 
+                      type="button" 
+                      className="hover-btn" 
+                      onClick={() => {
+                        if(formContacto.nombre && formContacto.correo && formContacto.mensaje) {
+                          setMostrarCaptcha(true);
+                        } else {
+                          alert("Por favor, llena todos los campos antes de enviar.");
+                        }
+                      }} 
+                      style={{ width: "100%", padding: "14px", background: theme.accentGrad, color: "#fff", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", marginTop: "10px" }}
+                    >
+                      Enviar Mensaje
+                    </button>
+                  ) : (
+                    <div style={{ marginTop: "15px", display: "flex", flexDirection: "column", alignItems: "center", gap: "10px" }}>
+                      {enviando ? (
+                        <span style={{ color: theme.cyan, fontWeight: "bold", fontSize: "14px" }}>Enviando mensaje...</span>
+                      ) : (
+                        <>
+                          <span style={{ color: theme.textSecondary, fontSize: "12px" }}>Confirma que eres humano para enviar:</span>
+                          <ReCAPTCHA
+                            sitekey="6LcfIkwtAAAAABjmTmzI-feWVVYQfl6FsPc7qKkj"
+                            onChange={procesarEnvioFinal}
+                            theme="dark"
+                          />
+                          <button type="button" onClick={() => setMostrarCaptcha(false)} style={{ background: "transparent", color: theme.textSecondary, border: "none", fontSize: "11px", cursor: "pointer", textDecoration: "underline" }}>
+                            Cancelar
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </form>
               </div>
 
