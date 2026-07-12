@@ -35,10 +35,12 @@ export default function VerificarDocumento() {
       let ordenEncontrada = null;
 
       // 1. SOLUCIÓN AL BUG: Primero intentamos buscar directamente por el código de la orden
+      const tokenNumerico = isNaN(Number(token)) ? token : Number(token);
+
       const { data: porCodigo } = await supabase
         .from("lab_ordenes")
         .select("id, codigo_orden, paciente_nombre, paciente_telefono, paciente_email, procedencia, created_at")
-        .eq("codigo_orden", token)
+        .eq("codigo_orden", tokenNumerico) // AHORA ENVIAMOS EL FORMATO CORRECTO
         .maybeSingle();
 
       if (porCodigo) {
