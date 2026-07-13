@@ -73,12 +73,20 @@ export default function VerificarDocumento() {
 
         if (resultadosData && resultadosData.length > 0) {
           // Filtramos usando múltiples condiciones por seguridad
-          const resVal = resultadosData.filter(r => 
-            r.mostrar_en_reporte === true || 
-            r.validado === true || 
-            String(r.estado_validacion || "").toLowerCase().trim() === 'validado' ||
-            String(r.estado || "").toLowerCase().trim() === 'validado'
-          );
+          // AHORA EL FILTRO EXIGE QUE TENGA UN VALOR REAL Y ESTÉ VALIDADO
+          const resVal = resultadosData.filter(r => {
+            // 1. Verificamos que no esté vacío
+            const tieneValor = (r.resultado_numero !== null && r.resultado_numero !== undefined) || 
+                               (r.resultado_texto !== null && r.resultado_texto.trim() !== "");
+            
+            // 2. Verificamos que esté validado
+            const estaValidado = r.validado === true || 
+                                 String(r.estado_validacion || "").toLowerCase().trim() === 'validado' ||
+                                 String(r.estado || "").toLowerCase().trim() === 'validado' ||
+                                 r.validado_por !== null; // Si tiene la firma de alguien, está validado
+                                 
+            return tieneValor && estaValidado;
+          });
           
           const mapeados = resVal.map(r => ({
              nombre: r.nombre_analito || r.nombre_examen || "Examen",
