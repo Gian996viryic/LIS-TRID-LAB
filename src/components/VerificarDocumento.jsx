@@ -30,7 +30,6 @@ export default function VerificarDocumento() {
       if (!isNaN(tokenNum)) {
         const { data: porCodigoNum } = await supabase
           .from("lab_ordenes")
-          // AGREGADO: paciente_cedula
           .select("id, codigo_orden, paciente_nombre, paciente_cedula, paciente_telefono, procedencia, created_at")
           .eq("codigo_orden", tokenNum)
           .maybeSingle();
@@ -64,14 +63,15 @@ export default function VerificarDocumento() {
         setOrden(ordenEncontrada);
         let listaValidados = [];
 
-        // 4. Extraer Resultados Generales
+        // 4. Extraer Resultados Generales (AHORA INCLUYE mostrar_en_reporte)
         const { data: resultadosData } = await supabase
           .from("lab_orden_resultados")
-          .select("nombre_analito, resultado_numero, resultado_texto, unidad, validado, estado_validacion")
+          .select("nombre_analito, resultado_numero, resultado_texto, unidad, validado, estado_validacion, mostrar_en_reporte")
           .eq("orden_id", ordenEncontrada.id);
 
         if (resultadosData) {
-          const resVal = resultadosData.filter(r => r.validado === true || String(r.estado_validacion || "").toLowerCase().trim() === 'validado');
+          // AHORA EL FILTRO USA TU COLUMNA 'mostrar_en_reporte'
+          const resVal = resultadosData.filter(r => r.mostrar_en_reporte === true || r.validado === true || String(r.estado_validacion || "").toLowerCase().trim() === 'validado');
           const mapeados = resVal.map(r => ({
              nombre: r.nombre_analito,
              valor: r.resultado_numero !== null ? r.resultado_numero : r.resultado_texto,
@@ -202,8 +202,8 @@ export default function VerificarDocumento() {
           </div>
         ) : (
           <div style={{ padding: "25px 20px", textAlign: "center", backgroundColor: "white", color: "#64748b", fontSize: "14px" }}>
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="1.5" style={{ marginBottom: "10px" }}><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-            <p style={{ margin: 0 }}>Los resultados de esta orden aún se encuentran en proceso o no han sido validados por el responsable del laboratorio.</p>
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="1.5" style={{ marginBottom: "10px", display: "block", margin: "0 auto" }}><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            <p style={{ margin: 0, marginTop: "10px" }}>Los resultados de esta orden aún se encuentran en proceso o no han sido validados por el responsable del laboratorio.</p>
           </div>
         )}
       </div>
