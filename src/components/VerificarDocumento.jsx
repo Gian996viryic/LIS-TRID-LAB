@@ -63,33 +63,43 @@ export default function VerificarDocumento() {
         setOrden(ordenEncontrada);
         let listaValidados = [];
 
-        // 4. Extraer Resultados Generales (AHORA INCLUYE mostrar_en_reporte)
-        const { data: resultadosData } = await supabase
+        // 4. Extraer Resultados Generales (USAMOS SELECT * PARA EVITAR ERRORES DE COLUMNAS INEXISTENTES)
+        const { data: resultadosData, error: errRes } = await supabase
           .from("lab_orden_resultados")
-          .select("nombre_analito, resultado_numero, resultado_texto, unidad, validado, estado_validacion, mostrar_en_reporte")
+          .select("*") 
           .eq("orden_id", ordenEncontrada.id);
 
-        if (resultadosData) {
-          // AHORA EL FILTRO USA TU COLUMNA 'mostrar_en_reporte'
-          const resVal = resultadosData.filter(r => r.mostrar_en_reporte === true || r.validado === true || String(r.estado_validacion || "").toLowerCase().trim() === 'validado');
+        if (errRes) console.error("Error técnico al cargar resultados generales:", errRes);
+
+        if (resultadosData && resultadosData.length > 0) {
+          // Filtramos usando múltiples condiciones por seguridad
+          const resVal = resultadosData.filter(r => 
+            r.mostrar_en_reporte === true || 
+            r.validado === true || 
+            String(r.estado_validacion || "").toLowerCase().trim() === 'validado' ||
+            String(r.estado || "").toLowerCase().trim() === 'validado'
+          );
+          
           const mapeados = resVal.map(r => ({
-             nombre: r.nombre_analito,
-             valor: r.resultado_numero !== null ? r.resultado_numero : r.resultado_texto,
+             nombre: r.nombre_analito || r.nombre_examen || "Examen",
+             valor: r.resultado_numero !== null && r.resultado_numero !== undefined ? r.resultado_numero : (r.resultado_texto || ""),
              unidad: r.unidad || ""
           }));
           listaValidados = [...listaValidados, ...mapeados];
         }
 
         // 5. Extraer Resultados de Microbiología (Cultivos)
-        const { data: cultivosData } = await supabase
+        const { data: cultivosData, error: errCult } = await supabase
           .from("lab_cultivos_resultados")
-          .select("hemocultivo_indice, validado")
+          .select("*")
           .eq("orden_id", ordenEncontrada.id);
 
-        if (cultivosData) {
-           const cultVal = cultivosData.filter(c => c.validado === true);
+        if (errCult) console.error("Error técnico al cargar cultivos:", errCult);
+
+        if (cultivosData && cultivosData.length > 0) {
+           const cultVal = cultivosData.filter(c => c.validado === true || c.mostrar_en_reporte === true);
            const mapeadosCult = cultVal.map(c => ({
-              nombre: c.hemocultivo_indice || "Cultivo Microbiológico",
+              nombre: c.hemocultivo_indice || c.tipo_muestra || "Cultivo Microbiológico",
               valor: "VER REPORTE EN PDF",
               unidad: ""
            }));
