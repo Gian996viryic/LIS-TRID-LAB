@@ -123,7 +123,7 @@ export default function VerificarDocumento() {
     }
   }
 
-  // PANTALLAS DE CARGA Y ERROR CON DISEÑO TRIDLAB
+  // PANTALLAS DE CARGA Y ERROR
   if (cargando) {
     return (
       <div style={{ padding: "40px", textAlign: "center", fontFamily: "sans-serif" }}>
@@ -215,7 +215,8 @@ export default function VerificarDocumento() {
         </div>
         
         {resultados.length > 0 ? (
-          <div style={{ backgroundColor: "white" }}>
+          /* AQUI ESTÁ EL SCROLL INTERNO APLICADO */
+          <div style={{ backgroundColor: "white", maxHeight: "350px", overflowY: "auto" }}>
             <table style={{ width: "100%", fontSize: "13px", textAlign: "left", borderCollapse: "collapse" }}>
               <tbody>
                 {resultados.map((res, i) => (
