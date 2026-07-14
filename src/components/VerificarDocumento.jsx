@@ -108,12 +108,17 @@ export default function VerificarDocumento() {
            listaValidados = [...listaValidados, ...mapeadosCult];
         }
 
-        // --- ALGORITMO DE ORDENAMIENTO (Mapeado de tu código fuente) ---
+        // --- ALGORITMO DE ORDENAMIENTO (Con prioridad a Hematología) ---
         listaValidados.sort((a, b) => {
-          // 1ro: Ordenar por Área
+          // 1ro: Ordenar por Área (Prioridad a Hematología)
           const areaA = (a.raw.grupo_nombre || "OTROS").toUpperCase();
           const areaB = (b.raw.grupo_nombre || "OTROS").toUpperCase();
-          if (areaA !== areaB) return areaA.localeCompare(areaB);
+          
+          const pesoAreaA = areaA.includes("HEMATOLOG") ? 1 : 2;
+          const pesoAreaB = areaB.includes("HEMATOLOG") ? 1 : 2;
+
+          if (pesoAreaA !== pesoAreaB) return pesoAreaA - pesoAreaB; // Hematología va primero
+          if (areaA !== areaB) return areaA.localeCompare(areaB); // El resto, alfabético
 
           // 2do: Ordenar por Examen
           const examA = (a.raw.nombre_examen || "EXAMEN GENERAL").toUpperCase();
@@ -236,60 +241,63 @@ export default function VerificarDocumento() {
           </div>
         </div>
 
-        {/* RESULTADOS INALTERABLES - AHORA CON CABECERAS Y SIN SCROLL INTERNO */}
+        {/* RESULTADOS INALTERABLES - AHORA CON SCROLL INTERNO RESTAURADO */}
         <div style={{ border: "1px solid #cbd5e1", borderRadius: "8px", overflow: "hidden", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)", backgroundColor: "#ffffff" }}>
-          <div style={{ backgroundColor: "#1F355E", padding: "15px", color: "#ffffff", fontWeight: "bold", fontSize: "15px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ backgroundColor: "#1F355E", padding: "15px", color: "#ffffff", fontWeight: "bold", fontSize: "15px", display: "flex", justifyContent: "space-between", alignItems: "center", zIndex: 2, position: "relative" }}>
             <span>Resultados Validados</span>
             <span style={{ fontSize: "11px", backgroundColor: "#0284c7", color: "#ffffff", padding: "4px 10px", borderRadius: "12px", border: "1px solid #38bdf8", letterSpacing: "0.5px" }}>INALTERABLES</span>
           </div>
           
           {resultados.length > 0 ? (
-            <table style={{ width: "100%", fontSize: "13px", textAlign: "left", borderCollapse: "collapse", backgroundColor: "#ffffff" }}>
-              <tbody>
-                {resultados.map((res, i) => {
-                  const currentArea = (res.raw.grupo_nombre || "OTROS").toUpperCase();
-                  const currentExam = (res.raw.nombre_examen || "EXAMEN GENERAL").toUpperCase();
-                  
-                  const showAreaHeader = lastAreaName !== currentArea;
-                  lastAreaName = currentArea;
-                  
-                  const showExamHeader = lastExamName !== currentExam;
-                  lastExamName = currentExam;
+            /* RESTAURADO EL SCROLL INTERNO AQUÍ */
+            <div style={{ maxHeight: "55vh", overflowY: "auto", backgroundColor: "#ffffff" }}>
+              <table style={{ width: "100%", fontSize: "13px", textAlign: "left", borderCollapse: "collapse", backgroundColor: "#ffffff" }}>
+                <tbody>
+                  {resultados.map((res, i) => {
+                    const currentArea = (res.raw.grupo_nombre || "OTROS").toUpperCase();
+                    const currentExam = (res.raw.nombre_examen || "EXAMEN GENERAL").toUpperCase();
+                    
+                    const showAreaHeader = lastAreaName !== currentArea;
+                    lastAreaName = currentArea;
+                    
+                    const showExamHeader = lastExamName !== currentExam;
+                    lastExamName = currentExam;
 
-                  return (
-                    <React.Fragment key={i}>
-                      {/* Cabecera de Área (Oscura) */}
-                      {showAreaHeader && (
-                        <tr>
-                          <td colSpan="2" style={{ backgroundColor: "#0f172a", color: "#ffffff", fontWeight: "900", textAlign: "center", padding: "8px", fontSize: "12px", textTransform: "uppercase", letterSpacing: "1px" }}>
-                            🧪 {currentArea}
+                    return (
+                      <React.Fragment key={i}>
+                        {/* Cabecera de Área (Oscura) */}
+                        {showAreaHeader && (
+                          <tr>
+                            <td colSpan="2" style={{ backgroundColor: "#0f172a", color: "#ffffff", fontWeight: "900", textAlign: "center", padding: "8px", fontSize: "12px", textTransform: "uppercase", letterSpacing: "1px" }}>
+                              🧪 {currentArea}
+                            </td>
+                          </tr>
+                        )}
+                        
+                        {/* Cabecera de Examen (Celeste claro) */}
+                        {showExamHeader && (
+                          <tr style={{ backgroundColor: "#e0f2fe", borderTop: "2px solid #bae6fd" }}>
+                            <td colSpan="2" style={{ color: "#0284c7", fontWeight: "800", textAlign: "left", padding: "6px 12px", fontSize: "11px", textTransform: "uppercase" }}>
+                              📋 {currentExam}
+                            </td>
+                          </tr>
+                        )}
+
+                        {/* Fila del Analito */}
+                        <tr style={{ borderBottom: "1px solid #e2e8f0", backgroundColor: "#ffffff" }}>
+                          <td style={{ padding: "12px 15px 12px 25px", color: "#334155", fontWeight: "500" }}>
+                            <span style={{ color: "#94a3b8", marginRight: "5px" }}>↳</span> {res.nombre}
+                          </td>
+                          <td style={{ padding: "12px 15px", fontWeight: "bold", color: "#1F355E", textAlign: "right" }}>
+                            {res.valor} <span style={{ color: "#64748b", fontWeight: "normal", fontSize: "12px", marginLeft: "4px" }}>{res.unidad}</span>
                           </td>
                         </tr>
-                      )}
-                      
-                      {/* Cabecera de Examen (Celeste claro) */}
-                      {showExamHeader && (
-                        <tr style={{ backgroundColor: "#e0f2fe", borderTop: "2px solid #bae6fd" }}>
-                          <td colSpan="2" style={{ color: "#0284c7", fontWeight: "800", textAlign: "left", padding: "6px 12px", fontSize: "11px", textTransform: "uppercase" }}>
-                            📋 {currentExam}
-                          </td>
-                        </tr>
-                      )}
-
-                      {/* Fila del Analito */}
-                      <tr style={{ borderBottom: "1px solid #e2e8f0", backgroundColor: "#ffffff" }}>
-                        <td style={{ padding: "12px 15px 12px 25px", color: "#334155", fontWeight: "500" }}>
-                          <span style={{ color: "#94a3b8", marginRight: "5px" }}>↳</span> {res.nombre}
-                        </td>
-                        <td style={{ padding: "12px 15px", fontWeight: "bold", color: "#1F355E", textAlign: "right" }}>
-                          {res.valor} <span style={{ color: "#64748b", fontWeight: "normal", fontSize: "12px", marginLeft: "4px" }}>{res.unidad}</span>
-                        </td>
-                      </tr>
-                    </React.Fragment>
-                  );
-                })}
-              </tbody>
-            </table>
+                      </React.Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           ) : (
             <div style={{ padding: "35px 20px", textAlign: "center", backgroundColor: "#ffffff" }}>
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="1.5" style={{ marginBottom: "12px", display: "block", margin: "0 auto" }}><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
