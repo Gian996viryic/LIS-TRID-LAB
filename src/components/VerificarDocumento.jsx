@@ -63,11 +63,12 @@ export default function VerificarDocumento() {
         setOrden(ordenEncontrada);
         let listaValidados = [];
 
-        // 4. Extraer Resultados Generales
+        // 4. Extraer Resultados Generales CON ORDENAMIENTO LOGICO
         const { data: resultadosData, error: errRes } = await supabase
           .from("lab_orden_resultados")
           .select("*") 
-          .eq("orden_id", ordenEncontrada.id);
+          .eq("orden_id", ordenEncontrada.id)
+          .order("id", { ascending: true }); // <--- AQUÍ ESTÁ EL TRUCO PARA EL ORDEN
 
         if (errRes) console.error("Error técnico al cargar resultados generales:", errRes);
 
@@ -92,11 +93,12 @@ export default function VerificarDocumento() {
           listaValidados = [...listaValidados, ...mapeados];
         }
 
-        // 5. Extraer Resultados de Microbiología (Cultivos)
+        // 5. Extraer Resultados de Microbiología (Cultivos) CON ORDENAMIENTO
         const { data: cultivosData, error: errCult } = await supabase
           .from("lab_cultivos_resultados")
           .select("*")
-          .eq("orden_id", ordenEncontrada.id);
+          .eq("orden_id", ordenEncontrada.id)
+          .order("id", { ascending: true }); // <--- ORDEN PARA MICROBIOLOGÍA
 
         if (errCult) console.error("Error técnico al cargar cultivos:", errCult);
 
@@ -215,7 +217,6 @@ export default function VerificarDocumento() {
         </div>
         
         {resultados.length > 0 ? (
-          /* AQUI ESTÁ EL SCROLL INTERNO APLICADO */
           <div style={{ backgroundColor: "white", maxHeight: "350px", overflowY: "auto" }}>
             <table style={{ width: "100%", fontSize: "13px", textAlign: "left", borderCollapse: "collapse" }}>
               <tbody>
