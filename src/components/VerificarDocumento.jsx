@@ -25,7 +25,7 @@ export default function VerificarDocumento() {
     try {
       let ordenEncontrada = null;
 
-      // 1. Buscar en lab_ordenes (USANDO * PARA EVITAR CRASH POR COLUMNAS INEXISTENTES)
+      // 1. Buscar en lab_ordenes (Como número)
       const tokenNum = Number(token);
       if (!isNaN(tokenNum)) {
         const { data: porCodigoNum } = await supabase
@@ -61,20 +61,28 @@ export default function VerificarDocumento() {
 
       if (ordenEncontrada) {
         
-        // --- LÓGICA DE TELÉFONO DE CONVENIO ---
-        // Buscamos si la orden tiene asociado un convenio bajo los nombres de columna más comunes
-        const idDelConvenio = ordenEncontrada.convenio_id || ordenEncontrada.id_convenio || ordenEncontrada.convenio;
+        // --- LÓGICA INTELIGENTE DE TELÉFONO DE CONVENIO ---
+        // Si el teléfono del paciente está vacío
+        if (!ordenEncontrada.paciente_telefono || String(ordenEncontrada.paciente_telefono).trim() === "") {
+          
+          let idConv = ordenEncontrada.convenio_id || ordenEncontrada.id_convenio;
+          let procedenciaStr = String(ordenEncontrada.procedencia || "").trim();
+          let convData = null;
 
-        // Si el teléfono del paciente está vacío y SÍ hay un convenio, buscamos el de la clínica
-        if ((!ordenEncontrada.paciente_telefono || String(ordenEncontrada.paciente_telefono).trim() === "") && idDelConvenio) {
-          const { data: convenioData } = await supabase
-            .from("lab_convenios")
-            .select("telefono")
-            .eq("id", idDelConvenio)
-            .maybeSingle();
-            
-          if (convenioData && convenioData.telefono) {
-            ordenEncontrada.paciente_telefono = convenioData.telefono;
+          // Intento A: Buscar por ID si es que existe
+          if (idConv) {
+             const { data } = await supabase.from("lab_convenios").select("telefono").eq("id", idConv).maybeSingle();
+             convData = data;
+          } 
+          // Intento B: Si no hay ID, buscamos por el NOMBRE exacto (Ej: "CLINICA B")
+          else if (procedenciaStr && procedenciaStr.toUpperCase() !== "AMBULATORIO" && procedenciaStr.toUpperCase() !== "PARTICULAR") {
+             const { data } = await supabase.from("lab_convenios").select("telefono").ilike("nombre", procedenciaStr).maybeSingle();
+             convData = data;
+          }
+
+          // Si encontramos el convenio y tiene teléfono, se lo asignamos a la vista
+          if (convData && convData.telefono) {
+             ordenEncontrada.paciente_telefono = convData.telefono;
           }
         }
 
