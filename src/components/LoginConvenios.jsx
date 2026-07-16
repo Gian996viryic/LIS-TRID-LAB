@@ -16,21 +16,38 @@ export default function LoginConvenios({ onLoginSuccess }) {
   async function iniciarSesionConvenio(e) {
     e.preventDefault();
     
-    if (!nombreInstitucion.trim() || !pinSecreto.trim()) {
-      toast.error("Por favor ingrese el nombre de la institución y el PIN secreto.");
+    const identificador = nombreInstitucion.trim();
+    const pin = pinSecreto.trim();
+
+    if (!identificador || !pin) {
+      toast.error("Por favor ingrese su institución/correo y el PIN secreto.");
       return;
     }
 
     setCargando(true);
-    const toastId = toast.loading("Verificando credenciales de convenio...");
+    const toastId = toast.loading("Verificando credenciales...");
 
     try {
-      const { data, error } = await supabase
-        .rpc("login_convenio_seguro", {
-          p_nombre: nombreInstitucion.trim(),
-          p_pin: pinSecreto.trim()
-        })
+      // 1. Intentar buscar por CORREO y PIN
+      let { data, error } = await supabase
+        .from("lab_convenios")
+        .select("id, nombre, activo")
+        .ilike("correo", identificador)
+        .eq("codigo_secreto", pin)
         .maybeSingle();
+
+      // 2. Si no encuentra por correo, intentar buscar por NOMBRE y PIN
+      if (!data) {
+        const { data: dataNombre, error: errorNombre } = await supabase
+          .from("lab_convenios")
+          .select("id, nombre, activo")
+          .ilike("nombre", identificador)
+          .eq("codigo_secreto", pin)
+          .maybeSingle();
+          
+        data = dataNombre;
+        if (errorNombre) error = errorNombre;
+      }
 
       if (error) {
         toast.error("Error de Base de Datos: " + error.message, { id: toastId });
@@ -39,7 +56,7 @@ export default function LoginConvenios({ onLoginSuccess }) {
       }
 
       if (!data) {
-        toast.error("Nombre de institución o PIN secreto incorrectos.", { id: toastId });
+        toast.error("Datos incorrectos. Revise su nombre/correo y el PIN.", { id: toastId });
         setCargando(false);
         return;
       }
@@ -52,7 +69,7 @@ export default function LoginConvenios({ onLoginSuccess }) {
 
       toast.success(`Bienvenido, ${data.nombre}`, { id: toastId });
       
-      const authData = { id: data.id, nombre: data.nombre, pin_secreto: pinSecreto.trim() };
+      const authData = { id: data.id, nombre: data.nombre, pin_secreto: pin };
       localStorage.setItem("tridlab_convenio_auth", JSON.stringify(authData));
       
       setTimeout(() => {
@@ -275,7 +292,7 @@ export default function LoginConvenios({ onLoginSuccess }) {
         <div className="b2b-header">
           <span className="b2b-badge">Portal Institucional</span>
           <h2 className="b2b-title">Acceso a Convenios</h2>
-          <p className="b2b-subtitle">Ingrese el nombre de su institución y el PIN secreto.</p>
+          <p className="b2b-subtitle">Ingrese el nombre <strong>o correo</strong> de su institución y el PIN secreto.</p>
         </div>
 
         <form onSubmit={iniciarSesionConvenio} style={{ width: '100%' }}>
@@ -286,7 +303,7 @@ export default function LoginConvenios({ onLoginSuccess }) {
             <input 
               type="text" 
               className="b2b-input" 
-              placeholder="Nombre del Lab. u Hospital" 
+              placeholder="Nombre o Correo" 
               value={nombreInstitucion} 
               onChange={(e) => setNombreInstitucion(e.target.value)} 
               required 
