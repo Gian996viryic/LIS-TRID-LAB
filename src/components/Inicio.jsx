@@ -5,6 +5,7 @@ import ReCAPTCHA from "react-google-recaptcha";
 export default function Inicio() {
   const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
+  const [menuAbierto, setMenuAbierto] = useState(false); // 📱 Estado para el menú móvil
 
   // Formulario de contacto
   const [formContacto, setFormContacto] = useState({ nombre: "", correo: "", mensaje: "" });
@@ -31,13 +32,13 @@ export default function Inicio() {
   };
 
   const scrollToSection = (id) => {
+    setMenuAbierto(false); // Cierra el menú en móvil al hacer clic
     const element = document.getElementById(id);
     if (element) {
       element.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   };
 
-  // Función que se ejecuta solo tras resolver el CAPTCHA
   const procesarEnvioFinal = async (captchaToken) => {
     if (!captchaToken) return; 
     
@@ -45,9 +46,7 @@ export default function Inicio() {
     try {
       const respuesta = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           service_id: "service_cbxm29h",
           template_id: "template_qrgmvtc", 
@@ -78,48 +77,23 @@ export default function Inicio() {
   return (
     <div style={{ backgroundColor: "transparent", fontFamily: "'Segoe UI', Roboto, sans-serif", color: theme.textPrimary, width: "100%", display: "flex", flexDirection: "column", minHeight: "100vh" }}>
       
-      {/* 🚀 INICIO DE LA IMAGEN DE FONDO DIFUMINADA */}
-      <div style={{
-        position: "fixed",
-        top: 0, left: 0, right: 0, bottom: 0,
-        backgroundImage: 'url("/IMAGEN_3.png")',
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        filter: "blur(8px)",
-        transform: "scale(1.1)", 
-        zIndex: 0 
-      }} />
-      
-      {/* 🚀 CAPA OSCURA PARA MEJORAR EL CONTRASTE DE LAS LETRAS */}
-      <div style={{
-        position: "fixed",
-        top: 0, left: 0, right: 0, bottom: 0,
-        backgroundColor: "rgba(10, 5, 20, 0.75)",
-        zIndex: 1 
-      }} />
+      {/* IMÁGENES DE FONDO BLINDADAS PARA MÓVIL */}
+      <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundImage: 'url("/IMAGEN_3.png")', backgroundSize: "cover", backgroundPosition: "center", filter: "blur(8px)", transform: "scale(1.1)", zIndex: 0 }} />
+      <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(10, 5, 20, 0.75)", zIndex: 1 }} />
 
-      {/* 🚀 CONTENEDOR PRINCIPAL (TODO EL CONTENIDO VA SOBRE EL FONDO) */}
       <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", width: "100%" }}>
         
-        {/* CSS GLOBAL */}
+        {/* 📱 CSS RESPONSIVO AÑADIDO A CONTINUACIÓN */}
         <style>{`
           * { box-sizing: border-box; margin: 0; padding: 0; }
-          
           html, body, #root { 
-            background-color: #0a0514; 
-            color: #ffffff !important;
-            height: auto !important;
-            min-height: 100vh !important;
-            overflow-y: auto !important; 
-            overflow-x: hidden !important; 
-            scroll-behavior: smooth !important; 
-            scroll-padding-top: 80px !important;
-            position: relative !important;
+            background-color: #0a0514; color: #ffffff !important; height: auto !important; min-height: 100vh !important;
+            overflow-x: hidden !important; scroll-behavior: smooth !important; scroll-padding-top: 80px !important;
           }
 
           .hover-btn { transition: all 0.3s ease; }
           .hover-btn:hover { transform: translateY(-3px); filter: brightness(1.2); box-shadow: 0 10px 20px rgba(6, 182, 212, 0.4); }
-          .nav-link { transition: color 0.3s; }
+          .nav-link { transition: color 0.3s; color: #ffffff; cursor: pointer; }
           .nav-link:hover { color: #06b6d4 !important; }
           
           .contact-input {
@@ -129,15 +103,36 @@ export default function Inicio() {
           }
           .contact-input:focus { border-color: #06b6d4; background: rgba(255,255,255,0.1); }
           .contact-input:disabled { opacity: 0.6; cursor: not-allowed; }
+
+          /* ⚙️ REGLAS ESPECÍFICAS PARA CELULARES */
+          .desktop-nav { display: flex; }
+          .mobile-menu-btn { display: none; background: none; border: none; color: white; font-size: 28px; cursor: pointer; }
+          .mobile-nav-overlay { display: none; }
+          
+          .hero-title { font-size: clamp(35px, 8vw, 80px); }
+          .section-padding { padding: 80px 20px; }
+
+          @media (max-width: 850px) {
+            .desktop-nav { display: none !important; }
+            .mobile-menu-btn { display: block; }
+            .hero-buttons { flex-direction: column; width: 100%; gap: 10px !important; }
+            .hero-buttons button { width: 100%; }
+            .section-padding { padding: 60px 15px; }
+            .mobile-nav-overlay {
+              display: flex; flexDirection: column; position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
+              background: rgba(10, 5, 20, 0.98); z-index: 999; justify-content: center; alignItems: center; gap: 30px;
+              opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+            }
+            .mobile-nav-overlay.open { opacity: 1; pointer-events: auto; }
+          }
         `}</style>
 
-        {/* 🟢 NAVBAR FIJA */}
+        {/* 🟢 NAVBAR ADAPTATIVA */}
         <nav style={{ 
           position: "fixed", top: 0, left: 0, width: "100%", zIndex: 1000, 
-          padding: scrolled ? "15px 40px" : "25px 40px",
+          padding: scrolled ? "15px 20px" : "25px 20px", /* Reducido para móvil */
           backgroundColor: scrolled ? theme.navBg : "transparent",
-          backdropFilter: "blur(10px)", 
-          borderBottom: scrolled ? `1px solid rgba(255,255,255,0.05)` : "1px solid transparent",
+          backdropFilter: "blur(10px)", borderBottom: scrolled ? `1px solid rgba(255,255,255,0.05)` : "1px solid transparent",
           display: "flex", justifyContent: "space-between", alignItems: "center", transition: "0.3s all"
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }} onClick={() => scrollToSection("inicio")}>
@@ -147,123 +142,122 @@ export default function Inicio() {
             </span>
           </div>
           
-          {/* ENLACES Y BOTÓN EN EL ORDEN CORRECTO DEL SCROLL */}
-          <div style={{ display: "flex", gap: "30px", fontWeight: "700", fontSize: "13px", textTransform: "uppercase", alignItems: "center" }}>
-            <span className="nav-link" style={{ cursor: "pointer", color: "#ffffff" }} onClick={() => scrollToSection("inicio")}>Inicio</span>
-            <span className="nav-link" style={{ cursor: "pointer", color: "#ffffff" }} onClick={() => scrollToSection("nosotros")}>Nosotros</span>
-            <span className="nav-link" style={{ cursor: "pointer", color: "#ffffff" }} onClick={() => scrollToSection("portales")}>Portales</span>
-            <button 
-               type="button"
-               className="hover-btn"
-               onClick={() => scrollToSection("contacto")}
-               style={{ background: theme.accentGrad, border: "none", color: "#ffffff", padding: "10px 24px", borderRadius: "50px", fontWeight: "900", cursor: "pointer", fontSize: "12px", whiteSpace: "nowrap" }}
-            >
+          {/* ENLACES ESCRITORIO */}
+          <div className="desktop-nav" style={{ gap: "30px", fontWeight: "700", fontSize: "13px", textTransform: "uppercase", alignItems: "center" }}>
+            <span className="nav-link" onClick={() => scrollToSection("inicio")}>Inicio</span>
+            <span className="nav-link" onClick={() => scrollToSection("nosotros")}>Nosotros</span>
+            <span className="nav-link" onClick={() => scrollToSection("portales")}>Portales</span>
+            <button type="button" className="hover-btn" onClick={() => scrollToSection("contacto")} style={{ background: theme.accentGrad, border: "none", color: "#ffffff", padding: "10px 24px", borderRadius: "50px", fontWeight: "900", cursor: "pointer", fontSize: "12px", whiteSpace: "nowrap" }}>
               CONTÁCTANOS
             </button>
           </div>
+
+          {/* BOTÓN HAMBURGUESA MÓVIL */}
+          <button className="mobile-menu-btn" onClick={() => setMenuAbierto(!menuAbierto)}>
+            {menuAbierto ? "✕" : "☰"}
+          </button>
         </nav>
+
+        {/* 📱 MENÚ DESPLEGABLE MÓVIL */}
+        <div className={`mobile-nav-overlay ${menuAbierto ? 'open' : ''}`}>
+          <span className="nav-link" style={{ fontSize: "22px", fontWeight: "bold" }} onClick={() => scrollToSection("inicio")}>Inicio</span>
+          <span className="nav-link" style={{ fontSize: "22px", fontWeight: "bold" }} onClick={() => scrollToSection("nosotros")}>Nosotros</span>
+          <span className="nav-link" style={{ fontSize: "22px", fontWeight: "bold" }} onClick={() => scrollToSection("portales")}>Portales</span>
+          <button type="button" className="hover-btn" onClick={() => scrollToSection("contacto")} style={{ background: theme.accentGrad, border: "none", color: "#ffffff", padding: "15px 40px", borderRadius: "50px", fontWeight: "900", cursor: "pointer", fontSize: "16px", marginTop: "20px" }}>
+            CONTÁCTANOS
+          </button>
+        </div>
 
         {/* 🔵 HERO SECTION */}
         <header id="inicio" style={{ 
           minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center",
-          background: `radial-gradient(circle at center, rgba(30, 27, 75, 0.6) 0%, rgba(10, 5, 20, 0.2) 100%)`, textAlign: "center", padding: "100px 20px 20px 20px"
+          background: `radial-gradient(circle at center, rgba(30, 27, 75, 0.6) 0%, rgba(10, 5, 20, 0.2) 100%)`, textAlign: "center", padding: "100px 15px 40px 15px"
         }}>
           <div style={{ fontSize: "50px", marginBottom: "15px" }}>🩺🧪</div>
 
-          <h3 style={{ fontSize: "24px", fontWeight: "900", margin: "0 0 5px 0", color: "#f8fafc" }}>
+          <h3 style={{ fontSize: "clamp(18px, 4vw, 24px)", fontWeight: "900", margin: "0 0 5px 0", color: "#f8fafc" }}>
             LABORATORIO CLÍNICO <span style={{ background: theme.accentGrad, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>TRIDLAB</span>
           </h3>
-          <p style={{ color: theme.cyan, fontStyle: "italic", fontWeight: "700", marginBottom: "40px", fontSize: "14px" }}>
+          <p style={{ color: theme.cyan, fontStyle: "italic", fontWeight: "700", marginBottom: "40px", fontSize: "clamp(12px, 3vw, 14px)" }}>
             ¡CIENCIA, SALUD Y TECNOLOGÍA A SU SERVICIO!
           </p>
           
-          <h1 style={{ fontSize: "clamp(45px, 8vw, 80px)", fontWeight: "900", lineHeight: "1.1", margin: "0 0 20px 0", color: "#ffffff" }}>
+          <h1 className="hero-title" style={{ fontWeight: "900", lineHeight: "1.1", margin: "0 0 20px 0", color: "#ffffff" }}>
             CIENCIA QUE <span style={{ color: theme.cyan }}>CONECTA</span><br/>CON TU SALUD
           </h1>
           
-          <p style={{ maxWidth: "650px", fontSize: "16px", color: theme.textSecondary, marginBottom: "40px", lineHeight: "1.6", marginLeft: "auto", marginRight: "auto" }}>
+          <p style={{ maxWidth: "650px", fontSize: "clamp(14px, 4vw, 16px)", color: theme.textSecondary, marginBottom: "40px", lineHeight: "1.6", marginInline: "auto" }}>
             Redefinimos la experiencia médica combinando la más alta rigurosidad científica con un acceso digital inmediato, seguro y transparente.
           </p>
           
-          <div style={{ display: "flex", gap: "20px", justifyContent: "center" }}>
-            <button type="button" className="hover-btn" onClick={() => scrollToSection("portales")} style={{ padding: "14px 35px", borderRadius: "50px", background: theme.accentGrad, border: "none", color: "#ffffff", fontWeight: "800", cursor: "pointer", fontSize: "15px" }}>Acceder a Portales</button>
-            <button type="button" className="hover-btn" onClick={() => scrollToSection("contacto")} style={{ padding: "14px 35px", borderRadius: "50px", background: "transparent", border: "2px solid rgba(255,255,255,0.2)", color: "#ffffff", fontWeight: "800", cursor: "pointer", fontSize: "15px" }}>Contáctanos</button>
+          {/* CONTENEDOR DE BOTONES CON WRAP Y CLASE RESPONSIVA */}
+          <div className="hero-buttons" style={{ display: "flex", gap: "20px", justifyContent: "center", flexWrap: "wrap" }}>
+            <button type="button" className="hover-btn" onClick={() => scrollToSection("portales")} style={{ padding: "14px 35px", borderRadius: "50px", background: theme.accentGrad, border: "none", color: "#ffffff", fontWeight: "800", cursor: "pointer", fontSize: "15px", whiteSpace: "nowrap" }}>Acceder a Portales</button>
+            <button type="button" className="hover-btn" onClick={() => scrollToSection("contacto")} style={{ padding: "14px 35px", borderRadius: "50px", background: "transparent", border: "2px solid rgba(255,255,255,0.2)", color: "#ffffff", fontWeight: "800", cursor: "pointer", fontSize: "15px", whiteSpace: "nowrap" }}>Contáctanos</button>
           </div>
         </header>
 
-        {/* 🟣 SECCIÓN NOSOTROS (Historia, Misión y Visión) */}
-        <section id="nosotros" style={{ padding: "80px 20px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-          
+        {/* 🟣 SECCIÓN NOSOTROS */}
+        <section id="nosotros" className="section-padding" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
           <div style={{ maxWidth: "1000px", width: "100%", textAlign: "center", marginBottom: "40px" }}>
              <h2 style={{ fontSize: "14px", color: theme.purple, fontWeight: "900", textTransform: "uppercase", letterSpacing: "2px" }}>Nuestra Esencia</h2>
-             <h3 style={{ fontSize: "36px", fontWeight: "900", color: "#fff", marginTop: "10px" }}>Ciencia con Calidad Humana</h3>
+             <h3 style={{ fontSize: "clamp(26px, 6vw, 36px)", fontWeight: "900", color: "#fff", marginTop: "10px" }}>Ciencia con Calidad Humana</h3>
           </div>
 
           <div style={{ maxWidth: "1000px", width: "100%", display: "flex", flexDirection: "column", gap: "30px" }}>
-            
-            <div style={{ background: theme.card, borderRadius: "20px", padding: "40px", border: "1px solid rgba(255,255,255,0.05)", backdropFilter: "blur(5px)" }}>
+            <div style={{ background: theme.card, borderRadius: "20px", padding: "clamp(20px, 5vw, 40px)", border: "1px solid rgba(255,255,255,0.05)", backdropFilter: "blur(5px)" }}>
               <h4 style={{ color: theme.cyan, fontSize: "20px", marginBottom: "15px", fontWeight: "800" }}>El Origen de TridLab</h4>
               <p style={{ color: theme.textSecondary, fontSize: "15px", lineHeight: "1.8" }}>
                 Nuestra motivación nació de la experiencia en grandes hospitales, donde la eficiencia y velocidad a menudo eclipsaban la conexión humana. El punto de inflexión fue un diagnóstico crítico familiar retrasado por fallos administrativos. Allí entendimos nuestro propósito: crear un laboratorio donde la <strong>precisión científica</strong> sea la base, y la <strong>calidad humana</strong> en la atención al paciente sea la prioridad en <strong style={{ background: theme.accentGrad, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>TRIDLAB</strong>.
               </p>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "30px" }}>
-              <div style={{ background: theme.card, borderRadius: "20px", padding: "40px", border: "1px solid rgba(255,255,255,0.05)", backdropFilter: "blur(5px)" }}>
+            {/* 🔥 CORRECCIÓN DEL GRID (evita desbordamientos en móviles) */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))", gap: "30px" }}>
+              <div style={{ background: theme.card, borderRadius: "20px", padding: "clamp(20px, 5vw, 40px)", border: "1px solid rgba(255,255,255,0.05)", backdropFilter: "blur(5px)" }}>
                 <h4 style={{ color: theme.purple, fontSize: "20px", marginBottom: "15px", fontWeight: "800" }}>Nuestra Misión</h4>
                 <p style={{ color: theme.textSecondary, fontSize: "15px", lineHeight: "1.8" }}>
                   Brindar diagnósticos clínicos de la más alta precisión y rapidez mediante tecnología de vanguardia, acompañados de un trato humano, cálido y empático. Nos comprometemos a entregar certidumbre a nuestros pacientes y respaldo absoluto a los médicos tratantes, siendo un eslabón vital donde la ciencia se une con la compasión.
                 </p>
               </div>
-              <div style={{ background: theme.card, borderRadius: "20px", padding: "40px", border: "1px solid rgba(255,255,255,0.05)", backdropFilter: "blur(5px)" }}>
+              <div style={{ background: theme.card, borderRadius: "20px", padding: "clamp(20px, 5vw, 40px)", border: "1px solid rgba(255,255,255,0.05)", backdropFilter: "blur(5px)" }}>
                 <h4 style={{ color: theme.cyan, fontSize: "20px", marginBottom: "15px", fontWeight: "800" }}>Nuestra Visión</h4>
                 <p style={{ color: theme.textSecondary, fontSize: "15px", lineHeight: "1.8" }}>
                   Ser el referente en diagnóstico clínico en Guayaquil, un espacio donde la tecnología de vanguardia y la empatía humana convergen. Redefinimos la atención médica para entregar respuestas precisas, ágiles y transparentes cuando las personas más lo necesitan.
                 </p>
               </div>
             </div>
-
           </div>
         </section>
 
         {/* 🟠 SECCIÓN PORTALES */}
-        <section id="portales" style={{ padding: "80px 20px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: `linear-gradient(to bottom, transparent, rgba(6, 182, 212, 0.05))` }}>
+        <section id="portales" className="section-padding" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: `linear-gradient(to bottom, transparent, rgba(6, 182, 212, 0.05))` }}>
           <div style={{ maxWidth: "1000px", width: "100%", textAlign: "center" }}>
-            
             <h2 style={{ fontSize: "14px", fontWeight: "800", marginBottom: "40px", color: theme.textSecondary, textTransform: "uppercase", letterSpacing: "2px" }}>
               SELECCIONE EL PORTAL DE ACCESO SEGURO
             </h2>
             
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(350px, 1fr))", gap: "30px", justifyContent: "center" }}>
+            {/* 🔥 CORRECCIÓN DEL GRID PORTALES */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))", gap: "30px", justifyContent: "center" }}>
               
-              <div style={{ background: theme.card, backdropFilter: "blur(5px)", borderRadius: "20px", padding: "50px 40px", border: `1px solid rgba(255,255,255,0.05)`, textAlign: "center", display: "flex", flexDirection: "column" }}>
+              <div style={{ background: theme.card, backdropFilter: "blur(5px)", borderRadius: "20px", padding: "40px 30px", border: `1px solid rgba(255,255,255,0.05)`, textAlign: "center", display: "flex", flexDirection: "column" }}>
                 <div style={{ fontSize: "60px", marginBottom: "20px", textShadow: "0 0 20px rgba(6, 182, 212, 0.5)" }}>🌍</div>
                 <h4 style={{ fontSize: "24px", fontWeight: "900", marginBottom: "15px", color: "#ffffff" }}>Portal de Pacientes</h4>
                 <p style={{ fontSize: "14px", color: theme.textSecondary, marginBottom: "40px", lineHeight: "1.6", flex: 1 }}>
                   Consulte, visualice y descargue de forma directa su historial completo de resultados médicos desde la comodidad de su celular o computadora.
                 </p>
-                <button 
-                  type="button"
-                  className="hover-btn"
-                  onClick={() => navigate("/resultados")}
-                  style={{ width: "100%", padding: "16px", background: "#0284c7", color: "#ffffff", border: "none", borderRadius: "50px", fontWeight: "900", cursor: "pointer", fontSize: "15px" }}
-                >
+                <button type="button" className="hover-btn" onClick={() => navigate("/resultados")} style={{ width: "100%", padding: "16px", background: "#0284c7", color: "#ffffff", border: "none", borderRadius: "50px", fontWeight: "900", cursor: "pointer", fontSize: "15px" }}>
                   Ingresar como Paciente
                 </button>
               </div>
 
-              <div style={{ background: theme.card, backdropFilter: "blur(5px)", borderRadius: "20px", padding: "50px 40px", border: `1px solid rgba(255,255,255,0.05)`, textAlign: "center", display: "flex", flexDirection: "column" }}>
+              <div style={{ background: theme.card, backdropFilter: "blur(5px)", borderRadius: "20px", padding: "40px 30px", border: `1px solid rgba(255,255,255,0.05)`, textAlign: "center", display: "flex", flexDirection: "column" }}>
                 <div style={{ fontSize: "60px", marginBottom: "20px", textShadow: "0 0 20px rgba(217, 70, 239, 0.5)" }}>🤝</div>
                 <h4 style={{ fontSize: "24px", fontWeight: "900", marginBottom: "15px", color: "#ffffff" }}>Portal Institucional</h4>
                 <p style={{ fontSize: "14px", color: theme.textSecondary, marginBottom: "40px", lineHeight: "1.6", flex: 1 }}>
                   Zona B2B exclusiva para empresas, clínicas y laboratorios aliados. Gestione y audite de forma masiva los análisis de sus pacientes vinculados.
                 </p>
-                <button 
-                  type="button"
-                  className="hover-btn"
-                  onClick={() => navigate("/convenios")}
-                  style={{ width: "100%", padding: "16px", background: "transparent", color: theme.cyan, border: `2px solid ${theme.cyan}`, borderRadius: "50px", fontWeight: "900", cursor: "pointer", fontSize: "15px" }}
-                >
+                <button type="button" className="hover-btn" onClick={() => navigate("/convenios")} style={{ width: "100%", padding: "16px", background: "transparent", color: theme.cyan, border: `2px solid ${theme.cyan}`, borderRadius: "50px", fontWeight: "900", cursor: "pointer", fontSize: "15px" }}>
                   Acceso Convenios
                 </button>
               </div>
@@ -272,12 +266,13 @@ export default function Inicio() {
           </div>
         </section>
 
-        {/* 📞 NUEVA SECCIÓN: CONTÁCTANOS */}
-        <section id="contacto" style={{ padding: "80px 20px", display: "flex", justifyContent: "center" }}>
+        {/* 📞 SECCIÓN: CONTÁCTANOS */}
+        <section id="contacto" className="section-padding" style={{ display: "flex", justifyContent: "center" }}>
           <div style={{ maxWidth: "1000px", width: "100%" }}>
-            <h2 style={{ fontSize: "36px", fontWeight: "900", color: "#fff", textAlign: "center", marginBottom: "40px" }}>CONTÁCTANOS</h2>
+            <h2 style={{ fontSize: "clamp(28px, 6vw, 36px)", fontWeight: "900", color: "#fff", textAlign: "center", marginBottom: "40px" }}>CONTÁCTANOS</h2>
             
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "50px" }}>
+            {/* 🔥 CORRECCIÓN DEL GRID CONTACTO */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))", gap: "40px" }}>
               
               <div>
                 <h4 style={{ fontSize: "20px", fontWeight: "800", color: theme.cyan, marginBottom: "20px" }}>Información de Contacto</h4>
@@ -286,7 +281,7 @@ export default function Inicio() {
                 </p>
                 
                 <div style={{ display: "flex", alignItems: "center", gap: "15px", marginBottom: "20px" }}>
-                  <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: "rgba(6, 182, 212, 0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px" }}>📍</div>
+                  <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: "rgba(6, 182, 212, 0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", flexShrink: 0 }}>📍</div>
                   <div>
                     <div style={{ fontWeight: "700", fontSize: "14px" }}>Nuestra Ubicación</div>
                     <div style={{ color: theme.textSecondary, fontSize: "13px" }}>Guayaquil, Ecuador</div>
@@ -294,7 +289,7 @@ export default function Inicio() {
                 </div>
 
                 <div style={{ display: "flex", alignItems: "center", gap: "15px", marginBottom: "20px" }}>
-                  <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: "rgba(217, 70, 239, 0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px" }}>📞</div>
+                  <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: "rgba(217, 70, 239, 0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", flexShrink: 0 }}>📞</div>
                   <div>
                     <div style={{ fontWeight: "700", fontSize: "14px" }}>Teléfono / WhatsApp</div>
                     <div style={{ color: theme.textSecondary, fontSize: "13px" }}>+593 99 999 9999</div>
@@ -302,7 +297,7 @@ export default function Inicio() {
                 </div>
 
                 <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-                  <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: "rgba(6, 182, 212, 0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px" }}>✉️</div>
+                  <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: "rgba(6, 182, 212, 0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", flexShrink: 0 }}>✉️</div>
                   <div>
                     <div style={{ fontWeight: "700", fontSize: "14px" }}>Correo Electrónico</div>
                     <div style={{ color: theme.textSecondary, fontSize: "13px" }}>info@tridlab.com</div>
@@ -310,7 +305,7 @@ export default function Inicio() {
                 </div>
               </div>
 
-              <div style={{ background: theme.card, backdropFilter: "blur(5px)", padding: "30px", borderRadius: "20px", border: "1px solid rgba(255,255,255,0.05)" }}>
+              <div style={{ background: theme.card, backdropFilter: "blur(5px)", padding: "clamp(20px, 5vw, 30px)", borderRadius: "20px", border: "1px solid rgba(255,255,255,0.05)" }}>
                 <form onSubmit={(e) => e.preventDefault()}>
                   <label style={{ fontSize: "12px", color: theme.textSecondary, marginBottom: "5px", display: "block" }}>Nombre Completo</label>
                   <input type="text" className="contact-input" required value={formContacto.nombre} onChange={e => setFormContacto({...formContacto, nombre: e.target.value})} placeholder="Ej. Ana Pérez" disabled={mostrarCaptcha} />
@@ -322,32 +317,20 @@ export default function Inicio() {
                   <textarea className="contact-input" required value={formContacto.mensaje} onChange={e => setFormContacto({...formContacto, mensaje: e.target.value})} rows="4" placeholder="Escribe tu mensaje aquí..." style={{ resize: "none" }} disabled={mostrarCaptcha}></textarea>
 
                   {!mostrarCaptcha ? (
-                    <button 
-                      type="button" 
-                      className="hover-btn" 
-                      onClick={() => {
-                        if(formContacto.nombre && formContacto.correo && formContacto.mensaje) {
-                          setMostrarCaptcha(true);
-                        } else {
-                          alert("Por favor, llena todos los campos antes de enviar.");
-                        }
-                      }} 
-                      style={{ width: "100%", padding: "14px", background: theme.accentGrad, color: "#fff", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", marginTop: "10px" }}
-                    >
+                    <button type="button" className="hover-btn" onClick={() => { if(formContacto.nombre && formContacto.correo && formContacto.mensaje) { setMostrarCaptcha(true); } else { alert("Por favor, llena todos los campos antes de enviar."); } }} style={{ width: "100%", padding: "14px", background: theme.accentGrad, color: "#fff", border: "none", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", marginTop: "10px" }}>
                       Enviar Mensaje
                     </button>
                   ) : (
                     <div style={{ marginTop: "15px", display: "flex", flexDirection: "column", alignItems: "center", gap: "10px" }}>
                       {enviando ? (
-                        <span style={{ color: theme.cyan, fontWeight: "bold", fontSize: "14px" }}>Enviando mensaje...</span>
+                        <span style={{ color: theme.cyan, fontWeight: "bold", fontSize: "14px", textAlign: "center" }}>Enviando mensaje...</span>
                       ) : (
                         <>
-                          <span style={{ color: theme.textSecondary, fontSize: "12px" }}>Confirma que eres humano para enviar:</span>
-                          <ReCAPTCHA
-                            sitekey="6LcfIkwtAAAAABjmTmzI-feWVVYQfl6FsPc7qKkj"
-                            onChange={procesarEnvioFinal}
-                            theme="dark"
-                          />
+                          <span style={{ color: theme.textSecondary, fontSize: "12px", textAlign: "center" }}>Confirma que eres humano para enviar:</span>
+                          {/* Contenedor responsivo para el CAPTCHA que en móviles muy estrechos suele desbordarse */}
+                          <div style={{ transform: "scale(0.85)", transformOrigin: "center" }}>
+                            <ReCAPTCHA sitekey="6LcfIkwtAAAAABjmTmzI-feWVVYQfl6FsPc7qKkj" onChange={procesarEnvioFinal} theme="dark" />
+                          </div>
                           <button type="button" onClick={() => setMostrarCaptcha(false)} style={{ background: "transparent", color: theme.textSecondary, border: "none", fontSize: "11px", cursor: "pointer", textDecoration: "underline" }}>
                             Cancelar
                           </button>
@@ -369,7 +352,7 @@ export default function Inicio() {
           </p>
         </footer>
 
-      </div> {/* FIN DEL CONTENEDOR PRINCIPAL Z-INDEX 2 */}
+      </div>
     </div>
   );
 }
