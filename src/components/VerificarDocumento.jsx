@@ -25,12 +25,12 @@ export default function VerificarDocumento() {
     try {
       let ordenEncontrada = null;
 
-      // 1. Buscar en lab_ordenes (Como número)
+      // 1. Buscar en lab_ordenes (USANDO * PARA EVITAR CRASH POR COLUMNAS INEXISTENTES)
       const tokenNum = Number(token);
       if (!isNaN(tokenNum)) {
         const { data: porCodigoNum } = await supabase
           .from("lab_ordenes")
-          .select("id, codigo_orden, paciente_nombre, paciente_cedula, paciente_telefono, procedencia, convenio_id, created_at")
+          .select("*")
           .eq("codigo_orden", tokenNum)
           .maybeSingle();
         if (porCodigoNum) ordenEncontrada = porCodigoNum;
@@ -40,7 +40,7 @@ export default function VerificarDocumento() {
       if (!ordenEncontrada) {
         const { data: porCodigoTexto } = await supabase
           .from("lab_ordenes")
-          .select("id, codigo_orden, paciente_nombre, paciente_cedula, paciente_telefono, procedencia, convenio_id, created_at")
+          .select("*")
           .eq("codigo_orden", token)
           .maybeSingle();
         if (porCodigoTexto) ordenEncontrada = porCodigoTexto;
@@ -52,7 +52,7 @@ export default function VerificarDocumento() {
         if (cotizacion) {
           const { data: porCotizacion } = await supabase
             .from("lab_ordenes")
-            .select("id, codigo_orden, paciente_nombre, paciente_cedula, paciente_telefono, procedencia, convenio_id, created_at")
+            .select("*")
             .eq("cotizacion_id", cotizacion.id)
             .maybeSingle();
           if (porCotizacion) ordenEncontrada = porCotizacion;
@@ -60,12 +60,17 @@ export default function VerificarDocumento() {
       }
 
       if (ordenEncontrada) {
-        // Lógica para obtener el teléfono del convenio si no hay teléfono del paciente
-        if ((!ordenEncontrada.paciente_telefono || ordenEncontrada.paciente_telefono.trim() === "") && ordenEncontrada.convenio_id) {
+        
+        // --- LÓGICA DE TELÉFONO DE CONVENIO ---
+        // Buscamos si la orden tiene asociado un convenio bajo los nombres de columna más comunes
+        const idDelConvenio = ordenEncontrada.convenio_id || ordenEncontrada.id_convenio || ordenEncontrada.convenio;
+
+        // Si el teléfono del paciente está vacío y SÍ hay un convenio, buscamos el de la clínica
+        if ((!ordenEncontrada.paciente_telefono || String(ordenEncontrada.paciente_telefono).trim() === "") && idDelConvenio) {
           const { data: convenioData } = await supabase
             .from("lab_convenios")
             .select("telefono")
-            .eq("id", ordenEncontrada.convenio_id)
+            .eq("id", idDelConvenio)
             .maybeSingle();
             
           if (convenioData && convenioData.telefono) {
@@ -161,13 +166,13 @@ export default function VerificarDocumento() {
   const contenedorPrincipalStyle = {
     minHeight: "100vh",
     width: "100%",
-    backgroundColor: "#ffffff", // Forzamos fondo blanco
-    color: "#0f172a", // Forzamos texto oscuro
+    backgroundColor: "#ffffff", 
+    color: "#0f172a", 
     padding: "30px 20px",
     fontFamily: "sans-serif",
     boxSizing: "border-box",
-    overflowY: "auto", // Permitimos scroll en la página completa
-    colorScheme: "light" // Instrucción al navegador para no invertir colores
+    overflowY: "auto", 
+    colorScheme: "light" 
   };
 
   if (cargando) {
@@ -254,7 +259,7 @@ export default function VerificarDocumento() {
           </div>
         </div>
 
-        {/* RESULTADOS INALTERABLES - AHORA CON SCROLL INTERNO RESTAURADO */}
+        {/* RESULTADOS INALTERABLES */}
         <div style={{ border: "1px solid #cbd5e1", borderRadius: "8px", overflow: "hidden", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)", backgroundColor: "#ffffff" }}>
           <div style={{ backgroundColor: "#1F355E", padding: "15px", color: "#ffffff", fontWeight: "bold", fontSize: "15px", display: "flex", justifyContent: "space-between", alignItems: "center", zIndex: 2, position: "relative" }}>
             <span>Resultados Validados</span>
@@ -262,7 +267,6 @@ export default function VerificarDocumento() {
           </div>
           
           {resultados.length > 0 ? (
-            /* RESTAURADO EL SCROLL INTERNO AQUÍ */
             <div style={{ maxHeight: "55vh", overflowY: "auto", backgroundColor: "#ffffff" }}>
               <table style={{ width: "100%", fontSize: "13px", textAlign: "left", borderCollapse: "collapse", backgroundColor: "#ffffff" }}>
                 <tbody>
@@ -278,7 +282,6 @@ export default function VerificarDocumento() {
 
                     return (
                       <React.Fragment key={i}>
-                        {/* Cabecera de Área (Oscura) */}
                         {showAreaHeader && (
                           <tr>
                             <td colSpan="2" style={{ backgroundColor: "#0f172a", color: "#ffffff", fontWeight: "900", textAlign: "center", padding: "8px", fontSize: "12px", textTransform: "uppercase", letterSpacing: "1px" }}>
@@ -287,7 +290,6 @@ export default function VerificarDocumento() {
                           </tr>
                         )}
                         
-                        {/* Cabecera de Examen (Celeste claro) */}
                         {showExamHeader && (
                           <tr style={{ backgroundColor: "#e0f2fe", borderTop: "2px solid #bae6fd" }}>
                             <td colSpan="2" style={{ color: "#0284c7", fontWeight: "800", textAlign: "left", padding: "6px 12px", fontSize: "11px", textTransform: "uppercase" }}>
@@ -296,7 +298,6 @@ export default function VerificarDocumento() {
                           </tr>
                         )}
 
-                        {/* Fila del Analito */}
                         <tr style={{ borderBottom: "1px solid #e2e8f0", backgroundColor: "#ffffff" }}>
                           <td style={{ padding: "12px 15px 12px 25px", color: "#334155", fontWeight: "500" }}>
                             <span style={{ color: "#94a3b8", marginRight: "5px" }}>↳</span> {res.nombre}
