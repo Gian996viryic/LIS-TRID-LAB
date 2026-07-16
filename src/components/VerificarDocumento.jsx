@@ -30,7 +30,7 @@ export default function VerificarDocumento() {
       if (!isNaN(tokenNum)) {
         const { data: porCodigoNum } = await supabase
           .from("lab_ordenes")
-          .select("id, codigo_orden, paciente_nombre, paciente_cedula, paciente_telefono, procedencia, created_at")
+          .select("id, codigo_orden, paciente_nombre, paciente_cedula, paciente_telefono, procedencia, convenio_id, created_at")
           .eq("codigo_orden", tokenNum)
           .maybeSingle();
         if (porCodigoNum) ordenEncontrada = porCodigoNum;
@@ -40,7 +40,7 @@ export default function VerificarDocumento() {
       if (!ordenEncontrada) {
         const { data: porCodigoTexto } = await supabase
           .from("lab_ordenes")
-          .select("id, codigo_orden, paciente_nombre, paciente_cedula, paciente_telefono, procedencia, created_at")
+          .select("id, codigo_orden, paciente_nombre, paciente_cedula, paciente_telefono, procedencia, convenio_id, created_at")
           .eq("codigo_orden", token)
           .maybeSingle();
         if (porCodigoTexto) ordenEncontrada = porCodigoTexto;
@@ -52,7 +52,7 @@ export default function VerificarDocumento() {
         if (cotizacion) {
           const { data: porCotizacion } = await supabase
             .from("lab_ordenes")
-            .select("id, codigo_orden, paciente_nombre, paciente_cedula, paciente_telefono, procedencia, created_at")
+            .select("id, codigo_orden, paciente_nombre, paciente_cedula, paciente_telefono, procedencia, convenio_id, created_at")
             .eq("cotizacion_id", cotizacion.id)
             .maybeSingle();
           if (porCotizacion) ordenEncontrada = porCotizacion;
@@ -60,6 +60,19 @@ export default function VerificarDocumento() {
       }
 
       if (ordenEncontrada) {
+        // Lógica para obtener el teléfono del convenio si no hay teléfono del paciente
+        if ((!ordenEncontrada.paciente_telefono || ordenEncontrada.paciente_telefono.trim() === "") && ordenEncontrada.convenio_id) {
+          const { data: convenioData } = await supabase
+            .from("lab_convenios")
+            .select("telefono")
+            .eq("id", ordenEncontrada.convenio_id)
+            .maybeSingle();
+            
+          if (convenioData && convenioData.telefono) {
+            ordenEncontrada.paciente_telefono = convenioData.telefono;
+          }
+        }
+
         setOrden(ordenEncontrada);
         let listaValidados = [];
 
