@@ -81,20 +81,21 @@ export default function Inicio() {
       <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundImage: 'url("/IMAGEN_3.png")', backgroundSize: "cover", backgroundPosition: "center", filter: "blur(8px)", transform: "scale(1.1)", zIndex: 0 }} />
       <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(10, 5, 20, 0.75)", zIndex: 1 }} />
 
-      <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", width: "100%", overflowX: "hidden" }}>
+      <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", width: "100%" }}>
         
-        {/* 🔥 CSS RESPONSIVO CORREGIDO: Sintaxis CSS pura sin camelCase 🔥 */}
+        {/* 🔥 CSS RESPONSIVO CORREGIDO: Scroll NATIVO liberado 🔥 */}
         <style>{`
           * { box-sizing: border-box; margin: 0; padding: 0; }
-          html, body, #root { 
+          
+          body { 
             background-color: #0a0514 !important; 
             color: #ffffff !important; 
-            height: auto !important; 
-            min-height: 100vh !important;
-            overflow-x: hidden !important; 
-            scroll-behavior: smooth !important; 
-            scroll-padding-top: 80px !important;
-            overscroll-behavior-y: none;
+            overflow-x: hidden; /* Evita la franja horizontal sin congelar el scroll vertical */
+          }
+          
+          html {
+            scroll-behavior: smooth; 
+            scroll-padding-top: 80px;
           }
 
           .hover-btn { transition: all 0.3s ease; }
@@ -125,7 +126,6 @@ export default function Inicio() {
             .hero-buttons button { width: 100%; }
             .section-padding { padding: 60px 15px; }
             
-            /* AQUÍ ESTABA EL ERROR: Se usaba flexDirection en vez de flex-direction */
             .mobile-nav-overlay {
               display: flex; 
               flex-direction: column; 
@@ -360,7 +360,7 @@ export default function Inicio() {
         {/* 🔴 PIE DE PÁGINA */}
         <footer style={{ padding: "40px 20px", textAlign: "center", borderTop: "1px solid rgba(255,255,255,0.05)", background: "#05020a", marginTop: "auto" }}>
           <p style={{ color: theme.textSecondary, fontSize: "12px", fontWeight: "600" }}>
-            © {new Date().getFullYear()} Laboratorio Clínico <strong style={{ background: theme.accentGrad, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>TRIDLAB</strong>[cite: 9]. Todos los derechos reservados.
+            © {new Date().getFullYear()} Laboratorio Clínico <strong style={{ background: theme.accentGrad, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>TRIDLAB</strong>. Todos los derechos reservados.
           </p>
         </footer>
 
