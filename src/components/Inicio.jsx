@@ -5,7 +5,7 @@ import ReCAPTCHA from "react-google-recaptcha";
 export default function Inicio() {
   const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
-  const [menuAbierto, setMenuAbierto] = useState(false); // 📱 Estado para el menú móvil
+  const [menuAbierto, setMenuAbierto] = useState(false); 
 
   // Formulario de contacto
   const [formContacto, setFormContacto] = useState({ nombre: "", correo: "", mensaje: "" });
@@ -81,14 +81,20 @@ export default function Inicio() {
       <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundImage: 'url("/IMAGEN_3.png")', backgroundSize: "cover", backgroundPosition: "center", filter: "blur(8px)", transform: "scale(1.1)", zIndex: 0 }} />
       <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(10, 5, 20, 0.75)", zIndex: 1 }} />
 
-      <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", width: "100%" }}>
+      <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", width: "100%", overflowX: "hidden" }}>
         
-        {/* 📱 CSS RESPONSIVO AÑADIDO A CONTINUACIÓN */}
+        {/* 🔥 CSS RESPONSIVO CORREGIDO: Sintaxis CSS pura sin camelCase 🔥 */}
         <style>{`
           * { box-sizing: border-box; margin: 0; padding: 0; }
           html, body, #root { 
-            background-color: #0a0514; color: #ffffff !important; height: auto !important; min-height: 100vh !important;
-            overflow-x: hidden !important; scroll-behavior: smooth !important; scroll-padding-top: 80px !important;
+            background-color: #0a0514 !important; 
+            color: #ffffff !important; 
+            height: auto !important; 
+            min-height: 100vh !important;
+            overflow-x: hidden !important; 
+            scroll-behavior: smooth !important; 
+            scroll-padding-top: 80px !important;
+            overscroll-behavior-y: none;
           }
 
           .hover-btn { transition: all 0.3s ease; }
@@ -114,14 +120,28 @@ export default function Inicio() {
 
           @media (max-width: 850px) {
             .desktop-nav { display: none !important; }
-            .mobile-menu-btn { display: block; }
+            .mobile-menu-btn { display: block; z-index: 1001; position: relative; }
             .hero-buttons { flex-direction: column; width: 100%; gap: 10px !important; }
             .hero-buttons button { width: 100%; }
             .section-padding { padding: 60px 15px; }
+            
+            /* AQUÍ ESTABA EL ERROR: Se usaba flexDirection en vez de flex-direction */
             .mobile-nav-overlay {
-              display: flex; flexDirection: column; position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
-              background: rgba(10, 5, 20, 0.98); z-index: 999; justify-content: center; alignItems: center; gap: 30px;
-              opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+              display: flex; 
+              flex-direction: column; 
+              position: fixed; 
+              top: 0; 
+              left: 0; 
+              width: 100%; 
+              height: 100vh;
+              background: rgba(10, 5, 20, 0.98); 
+              z-index: 999; 
+              justify-content: center; 
+              align-items: center; 
+              gap: 30px;
+              opacity: 0; 
+              pointer-events: none; 
+              transition: opacity 0.3s ease;
             }
             .mobile-nav-overlay.open { opacity: 1; pointer-events: auto; }
           }
@@ -130,12 +150,12 @@ export default function Inicio() {
         {/* 🟢 NAVBAR ADAPTATIVA */}
         <nav style={{ 
           position: "fixed", top: 0, left: 0, width: "100%", zIndex: 1000, 
-          padding: scrolled ? "15px 20px" : "25px 20px", /* Reducido para móvil */
-          backgroundColor: scrolled ? theme.navBg : "transparent",
-          backdropFilter: "blur(10px)", borderBottom: scrolled ? `1px solid rgba(255,255,255,0.05)` : "1px solid transparent",
+          padding: scrolled ? "15px 20px" : "25px 20px",
+          backgroundColor: scrolled || menuAbierto ? theme.navBg : "transparent",
+          backdropFilter: "blur(10px)", borderBottom: scrolled || menuAbierto ? `1px solid rgba(255,255,255,0.05)` : "1px solid transparent",
           display: "flex", justifyContent: "space-between", alignItems: "center", transition: "0.3s all"
         }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }} onClick={() => scrollToSection("inicio")}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", zIndex: 1001 }} onClick={() => scrollToSection("inicio")}>
             <img src="/logo-tridlab.png" alt="Logo" style={{ height: "35px" }} />
             <span style={{ fontWeight: "900", fontSize: "22px", letterSpacing: "1px", background: theme.accentGrad, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
               TRIDLAB
@@ -158,7 +178,7 @@ export default function Inicio() {
           </button>
         </nav>
 
-        {/* 📱 MENÚ DESPLEGABLE MÓVIL */}
+        {/* 📱 MENÚ DESPLEGABLE MÓVIL CENTRADO */}
         <div className={`mobile-nav-overlay ${menuAbierto ? 'open' : ''}`}>
           <span className="nav-link" style={{ fontSize: "22px", fontWeight: "bold" }} onClick={() => scrollToSection("inicio")}>Inicio</span>
           <span className="nav-link" style={{ fontSize: "22px", fontWeight: "bold" }} onClick={() => scrollToSection("nosotros")}>Nosotros</span>
@@ -190,7 +210,6 @@ export default function Inicio() {
             Redefinimos la experiencia médica combinando la más alta rigurosidad científica con un acceso digital inmediato, seguro y transparente.
           </p>
           
-          {/* CONTENEDOR DE BOTONES CON WRAP Y CLASE RESPONSIVA */}
           <div className="hero-buttons" style={{ display: "flex", gap: "20px", justifyContent: "center", flexWrap: "wrap" }}>
             <button type="button" className="hover-btn" onClick={() => scrollToSection("portales")} style={{ padding: "14px 35px", borderRadius: "50px", background: theme.accentGrad, border: "none", color: "#ffffff", fontWeight: "800", cursor: "pointer", fontSize: "15px", whiteSpace: "nowrap" }}>Acceder a Portales</button>
             <button type="button" className="hover-btn" onClick={() => scrollToSection("contacto")} style={{ padding: "14px 35px", borderRadius: "50px", background: "transparent", border: "2px solid rgba(255,255,255,0.2)", color: "#ffffff", fontWeight: "800", cursor: "pointer", fontSize: "15px", whiteSpace: "nowrap" }}>Contáctanos</button>
@@ -212,7 +231,6 @@ export default function Inicio() {
               </p>
             </div>
 
-            {/* 🔥 CORRECCIÓN DEL GRID (evita desbordamientos en móviles) */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))", gap: "30px" }}>
               <div style={{ background: theme.card, borderRadius: "20px", padding: "clamp(20px, 5vw, 40px)", border: "1px solid rgba(255,255,255,0.05)", backdropFilter: "blur(5px)" }}>
                 <h4 style={{ color: theme.purple, fontSize: "20px", marginBottom: "15px", fontWeight: "800" }}>Nuestra Misión</h4>
@@ -237,9 +255,7 @@ export default function Inicio() {
               SELECCIONE EL PORTAL DE ACCESO SEGURO
             </h2>
             
-            {/* 🔥 CORRECCIÓN DEL GRID PORTALES */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))", gap: "30px", justifyContent: "center" }}>
-              
               <div style={{ background: theme.card, backdropFilter: "blur(5px)", borderRadius: "20px", padding: "40px 30px", border: `1px solid rgba(255,255,255,0.05)`, textAlign: "center", display: "flex", flexDirection: "column" }}>
                 <div style={{ fontSize: "60px", marginBottom: "20px", textShadow: "0 0 20px rgba(6, 182, 212, 0.5)" }}>🌍</div>
                 <h4 style={{ fontSize: "24px", fontWeight: "900", marginBottom: "15px", color: "#ffffff" }}>Portal de Pacientes</h4>
@@ -261,7 +277,6 @@ export default function Inicio() {
                   Acceso Convenios
                 </button>
               </div>
-
             </div>
           </div>
         </section>
@@ -271,9 +286,7 @@ export default function Inicio() {
           <div style={{ maxWidth: "1000px", width: "100%" }}>
             <h2 style={{ fontSize: "clamp(28px, 6vw, 36px)", fontWeight: "900", color: "#fff", textAlign: "center", marginBottom: "40px" }}>CONTÁCTANOS</h2>
             
-            {/* 🔥 CORRECCIÓN DEL GRID CONTACTO */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))", gap: "40px" }}>
-              
               <div>
                 <h4 style={{ fontSize: "20px", fontWeight: "800", color: theme.cyan, marginBottom: "20px" }}>Información de Contacto</h4>
                 <p style={{ color: theme.textSecondary, fontSize: "15px", marginBottom: "30px", lineHeight: "1.6" }}>
@@ -327,7 +340,6 @@ export default function Inicio() {
                       ) : (
                         <>
                           <span style={{ color: theme.textSecondary, fontSize: "12px", textAlign: "center" }}>Confirma que eres humano para enviar:</span>
-                          {/* Contenedor responsivo para el CAPTCHA que en móviles muy estrechos suele desbordarse */}
                           <div style={{ transform: "scale(0.85)", transformOrigin: "center" }}>
                             <ReCAPTCHA sitekey="6LcfIkwtAAAAABjmTmzI-feWVVYQfl6FsPc7qKkj" onChange={procesarEnvioFinal} theme="dark" />
                           </div>
@@ -348,7 +360,7 @@ export default function Inicio() {
         {/* 🔴 PIE DE PÁGINA */}
         <footer style={{ padding: "40px 20px", textAlign: "center", borderTop: "1px solid rgba(255,255,255,0.05)", background: "#05020a", marginTop: "auto" }}>
           <p style={{ color: theme.textSecondary, fontSize: "12px", fontWeight: "600" }}>
-            © {new Date().getFullYear()} Laboratorio Clínico <strong style={{ background: theme.accentGrad, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>TRIDLAB</strong>. Todos los derechos reservados.
+            © {new Date().getFullYear()} Laboratorio Clínico <strong style={{ background: theme.accentGrad, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>TRIDLAB</strong>[cite: 9]. Todos los derechos reservados.
           </p>
         </footer>
 
