@@ -77,20 +77,29 @@ export default function Inicio() {
   return (
     <div style={{ backgroundColor: theme.bg, fontFamily: "'Segoe UI', Roboto, sans-serif", color: theme.textPrimary, width: "100%", display: "flex", flexDirection: "column", minHeight: "100vh", position: "relative" }}>
       
-      {/* 🚀 FONDO BLINDADO PARA EVITAR DESBORDAMIENTO HORIZONTAL EN MÓVILES */}
-      <div style={{ position: "fixed", top: "-10vh", left: "-10vw", width: "120vw", height: "120vh", zIndex: 0, pointerEvents: "none" }}>
-        <div style={{ width: "100%", height: "100%", backgroundImage: 'url("/IMAGEN_3.png")', backgroundSize: "cover", backgroundPosition: "center", filter: "blur(8px)" }} />
+      {/* 🚀 FONDO EN POSICIÓN -1 PARA NO BLOQUEAR NINGÚN TOQUE EN LA PANTALLA */}
+      <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", zIndex: -1, pointerEvents: "none" }}>
+        <div style={{ width: "100%", height: "100%", backgroundImage: 'url("/IMAGEN_3.png")', backgroundSize: "cover", backgroundPosition: "center", filter: "blur(8px)", transform: "scale(1.1)" }} />
         <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", backgroundColor: "rgba(10, 5, 20, 0.75)" }} />
       </div>
 
-      <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", width: "100%", overflowX: "clip" }}>
+      <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", width: "100%" }}>
         
-        {/* 🔥 CSS RESPONSIVO CORREGIDO: Scroll liberado y menú arreglado 🔥 */}
+        {/* 🔥 REGLA MAESTRA PARA FORZAR EL SCROLL EN REACT (CRÍTICO PARA CHROME MÓVIL) 🔥 */}
         <style>{`
           * { box-sizing: border-box; margin: 0; padding: 0; }
           
-          html { scroll-behavior: smooth; background-color: #0a0514; }
-          body { background-color: #0a0514; color: #ffffff; }
+          html, body, #root { 
+            background-color: #0a0514 !important; 
+            color: #ffffff !important; 
+            width: 100% !important;
+            height: auto !important; 
+            min-height: 100vh !important;
+            overflow-x: hidden !important; /* Bloquea el desbordamiento a los lados */
+            overflow-y: auto !important;   /* 🔥 FUERZA EL SCROLL VERTICAL 🔥 */
+            scroll-behavior: smooth !important; 
+            -webkit-overflow-scrolling: touch !important; /* Deslizamiento suave en móviles */
+          }
 
           .hover-btn { transition: all 0.3s ease; }
           .hover-btn:hover { transform: translateY(-3px); filter: brightness(1.2); box-shadow: 0 10px 20px rgba(6, 182, 212, 0.4); }
@@ -121,7 +130,6 @@ export default function Inicio() {
             .hero-buttons button { width: 100%; }
             .section-padding { padding: 60px 15px; }
             
-            /* 🚀 MENÚ MÓVIL PERFECTAMENTE CENTRADO EN CSS PURO */
             .mobile-nav-overlay {
               display: flex !important; 
               flex-direction: column !important; 
