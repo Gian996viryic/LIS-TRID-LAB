@@ -224,7 +224,18 @@ export default function PosMeson({ onClose, onSuccess, listaConvenios }) {
         const pConv = Number(ex.precio_convenio || pNormal); desc += (pNormal - pConv);
       }
     });
-    if (cuponAplicado && cuponAplicado.tipo !== 'convenio') desc = sub * (Number(cuponAplicado.porcentaje || 0) / 100);
+    
+    // 🚀 MAGIA PARA LA TARJETA DE CRÉDITO (TC5) 🚀
+    if (cuponAplicado && cuponAplicado.tipo !== 'convenio') {
+      if (cuponAplicado.codigo === 'TC5') {
+        // Lo hacemos negativo para que al restarlo (sub - desc) termine sumando al total
+        desc = -(sub * (Number(cuponAplicado.porcentaje || 0) / 100)); 
+      } else {
+        // Comportamiento normal para descuentos regulares
+        desc = sub * (Number(cuponAplicado.porcentaje || 0) / 100);
+      }
+    }
+    
     return { subtotal: sub, descuento: desc, total: sub - desc };
   }, [carritoExamenes, cuponAplicado]);
 

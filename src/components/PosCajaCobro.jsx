@@ -32,7 +32,14 @@ export default function PosCajaCobro({
            </div>
            <div style={{ flex: 1 }}>
              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}><span style={{ color: "#64748b" }}>Subtotal:</span> <span>${subtotal.toFixed(2)}</span></div>
-             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}><span style={{ color: cuponAplicado ? "#16a34a" : "#64748b" }}>Desc {cuponAplicado && cuponAplicado.tipo !== 'convenio' ? `(${cuponAplicado.porcentaje}%)` : (cuponAplicado?.tipo === 'convenio' ? '(Convenio)' : '')}:</span> <span style={{ color: cuponAplicado ? "#16a34a" : "inherit" }}>-${descuento.toFixed(2)}</span></div>
+             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+  <span style={{ color: cuponAplicado ? (descuento < 0 ? "#dc2626" : "#16a34a") : "#64748b" }}>
+    {descuento < 0 ? "Recargo TC" : "Desc"} {cuponAplicado && cuponAplicado.tipo !== 'convenio' ? `(${cuponAplicado.porcentaje}%)` : (cuponAplicado?.tipo === 'convenio' ? '(Convenio)' : '')}:
+  </span> 
+  <span style={{ color: cuponAplicado ? (descuento < 0 ? "#dc2626" : "#16a34a") : "inherit", fontWeight: "bold" }}>
+    {descuento < 0 ? "+" : "-"}${Math.abs(descuento).toFixed(2)}
+  </span>
+</div>
            </div>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", marginTop: "6px", paddingTop: "6px", borderTop: "2px solid #cbd5e1", fontWeight: "900", fontSize: "15px", color: "#0f172a" }}><span>TOTAL A PAGAR:</span><span style={{ color: "#0f766e" }}>${total.toFixed(2)}</span></div>
