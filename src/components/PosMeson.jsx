@@ -88,7 +88,28 @@ export default function PosMeson({ onClose, onSuccess, listaConvenios }) {
   const [estadoPago, setEstadoPago] = useState("PAGADO"); 
   const [metodoPago, setMetodoPago] = useState("efectivo");
   const [montoAbono, setMontoAbono] = useState("");
-
+// 🚀 MAGIA: Aplicar el recargo de Tarjeta (TC5) automáticamente al abrir la caja
+  useEffect(() => {
+    async function aplicarTC5PorDefecto() {
+      try {
+        const { data, error } = await supabase
+          .from('cupones')
+          .select('*')
+          .eq('codigo', 'TC5')
+          .eq('activo', true)
+          .single();
+          
+        if (!error && data) {
+          setCuponAplicado(data);
+          setCuponInput(data.codigo);
+        }
+      } catch (err) {
+        console.error("No se pudo cargar el cupón por defecto", err);
+      }
+    }
+    // Solo se autoejecuta cuando se abre una caja nueva
+    aplicarTC5PorDefecto();
+  }, []);
   async function buscarCotizacionGuardada(e) {
     if (e.key !== 'Enter' || !codigoBusquedaCotizacion.trim()) return;
     e.preventDefault();
