@@ -86,7 +86,7 @@ export default function PosMeson({ onClose, onSuccess, listaConvenios }) {
   const [cuponInput, setCuponInput] = useState("");
   const [cuponAplicado, setCuponAplicado] = useState(null);
   const [estadoPago, setEstadoPago] = useState("PAGADO"); 
-  const [metodoPago, setMetodoPago] = useState("efectivo");
+  const [metodoPago, setMetodoPago] = useState("tc");
   const [montoAbono, setMontoAbono] = useState("");
 // 🚀 MAGIA: Aplicar el recargo de Tarjeta (TC5) automáticamente al abrir la caja
   useEffect(() => {

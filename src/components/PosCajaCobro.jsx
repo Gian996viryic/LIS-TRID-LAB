@@ -5,6 +5,27 @@ export default function PosCajaCobro({
   subtotal, descuento, total, estadoPago, setEstadoPago, metodoPago, setMetodoPago,
   montoAbono, setMontoAbono, saldoPendiente
 }) {
+  
+  // 🚀 Función inteligente para detectar cambio a pago de contado
+  const handleMetodoPagoChange = (e) => {
+    const nuevoMetodo = e.target.value;
+
+    // Si estaba en Tarjeta (tc), lo cambian a otro, y el recargo TC5 está activo
+    if (metodoPago === "tc" && nuevoMetodo !== "tc" && cuponAplicado?.codigo === "TC5") {
+      const confirmar = window.confirm(`Has seleccionado ${nuevoMetodo.toUpperCase()}.\n\n¿Deseas aplicar el descuento por pago de contado (eliminar el recargo de tarjeta)?`);
+      
+      if (confirmar) {
+        setMetodoPago(nuevoMetodo);
+        setCuponAplicado(null); // Quita el recargo
+        setCuponInput("");      // Limpia el input
+      }
+      // Si el usuario cancela, no hacemos nada y se queda en "tc"
+    } else {
+      // Cambio de método normal
+      setMetodoPago(nuevoMetodo);
+    }
+  };
+
   return (
     <>
       <div style={{ background: "#f8fafc", border: "1px solid #cbd5e1", padding: "10px", borderRadius: "6px", marginTop: "10px", fontSize: "13px" }}>
@@ -33,13 +54,13 @@ export default function PosCajaCobro({
            <div style={{ flex: 1 }}>
              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}><span style={{ color: "#64748b" }}>Subtotal:</span> <span>${subtotal.toFixed(2)}</span></div>
              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
-  <span style={{ color: cuponAplicado ? (descuento < 0 ? "#dc2626" : "#16a34a") : "#64748b" }}>
-    {descuento < 0 ? "Recargo TC" : "Desc"} {cuponAplicado && cuponAplicado.tipo !== 'convenio' ? `(${cuponAplicado.porcentaje}%)` : (cuponAplicado?.tipo === 'convenio' ? '(Convenio)' : '')}:
-  </span> 
-  <span style={{ color: cuponAplicado ? (descuento < 0 ? "#dc2626" : "#16a34a") : "inherit", fontWeight: "bold" }}>
-    {descuento < 0 ? "+" : "-"}${Math.abs(descuento).toFixed(2)}
-  </span>
-</div>
+              <span style={{ color: cuponAplicado ? (descuento < 0 ? "#dc2626" : "#16a34a") : "#64748b" }}>
+                {descuento < 0 ? "Recargo TC" : "Desc"} {cuponAplicado && cuponAplicado.tipo !== 'convenio' ? `(${cuponAplicado.porcentaje}%)` : (cuponAplicado?.tipo === 'convenio' ? '(Convenio)' : '')}:
+              </span> 
+              <span style={{ color: cuponAplicado ? (descuento < 0 ? "#dc2626" : "#16a34a") : "inherit", fontWeight: "bold" }}>
+                {descuento < 0 ? "+" : "-"}${Math.abs(descuento).toFixed(2)}
+              </span>
+            </div>
            </div>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", marginTop: "6px", paddingTop: "6px", borderTop: "2px solid #cbd5e1", fontWeight: "900", fontSize: "15px", color: "#0f172a" }}><span>TOTAL A PAGAR:</span><span style={{ color: "#0f766e" }}>${total.toFixed(2)}</span></div>
@@ -56,7 +77,7 @@ export default function PosCajaCobro({
             {estadoPago !== "PENDIENTE" && (
               <div style={{ flex: 1 }}>
                  <label style={{ fontSize: "10px", color: "#555", display: "block", marginBottom: "2px" }}>Método</label>
-                 <select className="lis-input" style={{ width: "100%", height: "26px", padding: "2px 6px", border: "1px solid #9ca3af", borderRadius: "4px" }} value={metodoPago} onChange={e => setMetodoPago(e.target.value)}>
+                 <select className="lis-input" style={{ width: "100%", height: "26px", padding: "2px 6px", border: "1px solid #9ca3af", borderRadius: "4px" }} value={metodoPago} onChange={handleMetodoPagoChange}>
                     <option value="efectivo">Efectivo</option><option value="transferencia">Transferencia</option><option value="tc">Tarjeta</option>
                  </select>
               </div>
