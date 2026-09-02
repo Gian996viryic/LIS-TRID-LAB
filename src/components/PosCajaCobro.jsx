@@ -6,22 +6,35 @@ export default function PosCajaCobro({
   montoAbono, setMontoAbono, saldoPendiente
 }) {
   
-  // 🚀 Función inteligente para detectar cambio a pago de contado
+  // 🚀 Función de Vigilancia Bidireccional
   const handleMetodoPagoChange = (e) => {
     const nuevoMetodo = e.target.value;
 
-    // Si estaba en Tarjeta (tc), lo cambian a otro, y el recargo TC5 está activo
+    // CASO 1: De Tarjeta a Efectivo/Transferencia -> Alerta para QUITAR recargo
     if (metodoPago === "tc" && nuevoMetodo !== "tc" && cuponAplicado?.codigo === "TC5") {
-      const confirmar = window.confirm(`Has seleccionado ${nuevoMetodo.toUpperCase()}.\n\n¿Deseas aplicar el descuento por pago de contado (eliminar el recargo de tarjeta)?`);
+      const confirmar = window.confirm(`Has seleccionado ${nuevoMetodo.toUpperCase()}.\n\n¿Deseas aplicar el descuento por pago de contado (Eliminar el recargo de tarjeta)?`);
       
       if (confirmar) {
         setMetodoPago(nuevoMetodo);
-        setCuponAplicado(null); // Quita el recargo
-        setCuponInput("");      // Limpia el input
+        setCuponAplicado(null); // Borra el efecto matemático
+        setCuponInput("");      // Limpia la caja visual
+      } else {
+        setMetodoPago(nuevoMetodo); // Cambia el método pero mantiene el recargo
       }
-      // Si el usuario cancela, no hacemos nada y se queda en "tc"
-    } else {
-      // Cambio de método normal
+    } 
+    // CASO 2: De Efectivo/Transferencia a Tarjeta -> Alerta para PONER recargo
+    else if (nuevoMetodo === "tc" && cuponAplicado?.codigo !== "TC5") {
+      const confirmar = window.confirm(`Has vuelto a seleccionar TARJETA.\n\n¿Deseas volver a aplicar el recargo automático del 5%?`);
+      
+      if (confirmar) {
+        setMetodoPago(nuevoMetodo);
+        aplicarCupon("TC5"); // 🚀 Dispara el código TC5 automáticamente
+      } else {
+        setMetodoPago(nuevoMetodo); // Permite pago con TC sin cobrar el recargo extra
+      }
+    } 
+    // CASO 3: Cambios neutrales (Ej. Efectivo a Transferencia)
+    else {
       setMetodoPago(nuevoMetodo);
     }
   };
@@ -39,11 +52,10 @@ export default function PosCajaCobro({
                  style={{ flex: 1, height: "26px", borderRight: "none", borderRadius: "4px 0 0 4px", textTransform: "uppercase", padding: "4px 8px", border: "1px solid #9ca3af" }} 
                  value={cuponInput} 
                  onChange={(e) => setCuponInput(e.target.value)} 
-                 // 👇 AQUÍ ESTÁ LA MEJORA DEL ENTER 👇
                  onKeyDown={(e) => {
                    if (e.key === 'Enter') {
-                     e.preventDefault(); // Bloquea que el formulario se envíe accidentalmente
-                     aplicarCupon();     // Llama a la función que valida el descuento
+                     e.preventDefault(); 
+                     aplicarCupon();     
                    }
                  }}
                  disabled={!!cuponAplicado} 

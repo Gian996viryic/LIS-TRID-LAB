@@ -282,15 +282,21 @@ export default function PosMeson({ onClose, onSuccess, listaConvenios }) {
     return () => clearTimeout(timer);
   }, [busquedaExamen]);
 
-  async function aplicarCupon() {
-    if (!cuponInput) return;
-    const toastId = toast.loading("Validando cupón...");
-    const { data, error } = await supabase.from('cupones').select('*').eq('codigo', cuponInput.toUpperCase()).eq('activo', true).single();
-    if (error || !data) { toast.error("Cupón inválido", { id: toastId }); setCuponAplicado(null); return; }
-    if (data.vence_en && new Date(data.vence_en) < new Date()) return toast.error("Cupón expirado", { id: toastId }); 
-    if (data.usos_max && data.usos_count >= data.usos_max) return toast.error("Límite de uso alcanzado", { id: toastId }); 
+  async function aplicarCupon(codigoManual = null) {
+    // MAGIA: Si recibe un código directo (ej. "TC5") usa ese, si no, usa el de la cajita.
+    const codigoFinal = typeof codigoManual === 'string' ? codigoManual : cuponInput;
+    if (!codigoFinal) return;
+
+    const toastId = toast.loading("Validando...");
+    const { data, error } = await supabase.from('cupones').select('*').eq('codigo', codigoFinal.toUpperCase()).eq('activo', true).single();
+    
+    if (error || !data) { toast.error("Código inválido", { id: toastId }); setCuponAplicado(null); return; }
+    if (data.vence_en && new Date(data.vence_en) < new Date()) return toast.error("Código expirado", { id: toastId }); 
+    if (data.usos_max && data.usos_count >= data.usos_max) return toast.error("Límite alcanzado", { id: toastId }); 
+    
     setCuponAplicado(data);
-    toast.success(data.tipo === 'convenio' ? "¡Precios de convenio activados!" : `¡Cupón del ${data.porcentaje}% aplicado!`, { id: toastId });
+    setCuponInput(data.codigo); // Auto-llena la cajita visualmente
+    toast.success(data.tipo === 'convenio' ? "¡Convenio activado!" : `¡Recargo/Descuento aplicado!`, { id: toastId });
   }
 
   async function fetchExamenPorCodigo(codigoBuscado) {
