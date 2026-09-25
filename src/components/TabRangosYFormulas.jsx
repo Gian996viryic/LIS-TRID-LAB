@@ -39,12 +39,13 @@ export default function TabRangosYFormulas({ isDirty, setIsDirty }) {
     if (data) setUnidadesLista(data.map(u => u.nombre));
   }
 
+  // 🚀 Se agregó subtitulo_impresion a la consulta
   async function cargarEstructuraCompleta() {
     setLoading(true);
     const { data, error } = await supabase
       .from("lab_catalogo_analitos")
       .select(`
-        id, nombre_analito, unidad, orden_visual, formula_calculo,
+        id, nombre_analito, unidad, orden_visual, formula_calculo, subtitulo_impresion,
         examenes ( id, codigo, articulo ),
         lab_rangos_referencia ( id, sexo, edad_min_dias, edad_max_dias, rango_texto, rango_min, rango_max, unidad, activo )
       `)
@@ -69,10 +70,11 @@ export default function TabRangosYFormulas({ isDirty, setIsDirty }) {
     setLoading(false);
   }
 
+  // 🚀 Se agregó subtitulo_impresion a la consulta de recarga
   async function recargarExamenActual() {
     if (!examenSeleccionado) return;
     const { data, error } = await supabase.from("lab_catalogo_analitos").select(`
-      id, nombre_analito, unidad, orden_visual, formula_calculo,
+      id, nombre_analito, unidad, orden_visual, formula_calculo, subtitulo_impresion,
       lab_rangos_referencia ( id, sexo, edad_min_dias, edad_max_dias, rango_texto, rango_min, rango_max, unidad, activo )
     `).eq("examen_id", examenSeleccionado.id).order("orden_visual", { ascending: true });
     
@@ -126,6 +128,19 @@ export default function TabRangosYFormulas({ isDirty, setIsDirty }) {
     } else toast.error("Error al actualizar nombre en base de datos");
   }
 
+  // 🚀 NUEVA FUNCIÓN: Actualizar el subtítulo de impresión maestro
+  async function handleActualizarSubtitulo(analito_id, nuevoSubtitulo) {
+    const subtituloClean = nuevoSubtitulo ? nuevoSubtitulo.trim().toUpperCase() : null;
+    const row = rows.find(r => r.analito_id === analito_id);
+    if (row && row.subtitulo_impresion === subtituloClean) return;
+
+    const { error } = await supabase.from("lab_catalogo_analitos").update({ subtitulo_impresion: subtituloClean }).eq("id", analito_id);
+    if (!error) {
+       setRows(prev => prev.map(r => r.analito_id === analito_id ? { ...r, subtitulo_impresion: subtituloClean } : r));
+       toast.success("Subtítulo maestro actualizado");
+    } else toast.error("Error al actualizar subtítulo");
+  }
+
   async function handleActualizarOrdenAnalito(analito_id, nuevoOrden) {
     const ordenNum = Number(nuevoOrden);
     if (isNaN(ordenNum)) return;
@@ -158,6 +173,7 @@ export default function TabRangosYFormulas({ isDirty, setIsDirty }) {
             rowKey: `rango-${r.id}`,
             analito_id: analito.id,
             nombre_analito: analito.nombre_analito,
+            subtitulo_impresion: analito.subtitulo_impresion || "", // 🚀 Se mapea al cargar
             orden_visual: analito.orden_visual || 0,
             rango_id: r.id,
             sexo: r.sexo ?? "ALL",
@@ -182,11 +198,13 @@ export default function TabRangosYFormulas({ isDirty, setIsDirty }) {
     setIsDirty(false);
   }
 
+  // 🚀 Se agregó subtitulo_impresion a la fila vacía
   function crearFilaVacia(analito, esPrimeroDelGrupo = false, hijasExistentes = 0, baseFila = null, isCalc = false, formulaStr = "") {
     return {
       rowKey: `nuevo-${analito.id || baseFila?.analito_id}-${Date.now()}-${Math.random()}`,
       analito_id: analito.id || baseFila?.analito_id,
       nombre_analito: analito.nombre_analito || baseFila?.nombre_analito,
+      subtitulo_impresion: analito.subtitulo_impresion || baseFila?.subtitulo_impresion || "", 
       orden_visual: analito.orden_visual || baseFila?.orden_visual || 0,
       rango_id: null,
       sexo: baseFila ? baseFila.sexo : "ALL",
@@ -400,9 +418,22 @@ export default function TabRangosYFormulas({ isDirty, setIsDirty }) {
                                 <input type="text" defaultValue={row.nombre_analito} onBlur={(e) => handleActualizarNombreAnalito(row.analito_id, e.target.value)} style={{ fontWeight: "800", fontSize: "13px", border: "1px solid transparent", background: "transparent", color: "#0f172a", flex: 1, outline: "none", padding: "2px 4px", borderRadius: "4px", transition: "0.2s" }} onFocus={(e) => { e.target.style.border = "1px solid #0ea5e9"; e.target.style.background = "#fff"; }} onBlurCapture={(e) => { e.target.style.border = "1px solid transparent"; e.target.style.background = "transparent"; }} title="Clic para editar el nombre del analito" />
                                 <button onClick={() => handleEliminarAnalitoGlobal(row.analito_id, row.nombre_analito)} className="btn-action delete" title="Eliminar Analito" style={{ padding: "4px 6px" }}>🗑️</button>
                               </div>
+                              
+                              {/* 🚀 EL NUEVO BLOQUE CON EL INPUT DE SUBTÍTULO */}
                               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "4px" }}>
-                                <button onClick={() => toggleCalculado(row.rowKey, row.is_calculado)} style={{ background: row.is_calculado ? "#e0e7ff" : "#f1f5f9", color: row.is_calculado ? "#4338ca" : "#64748b", border: "1px solid", borderColor: row.is_calculado ? "#c7d2fe" : "#cbd5e1", borderRadius: "4px", padding: "2px 6px", fontSize: "10px", fontWeight: "bold", cursor: "pointer" }}>{row.is_calculado ? "🧮 Calculado" : "✍️ Manual"}</button>
+                                <button onClick={() => toggleCalculado(row.rowKey, row.is_calculado)} style={{ background: row.is_calculado ? "#e0e7ff" : "#f1f5f9", color: row.is_calculado ? "#4338ca" : "#64748b", border: "1px solid", borderColor: row.is_calculado ? "#c7d2fe" : "#cbd5e1", borderRadius: "4px", padding: "2px 6px", fontSize: "10px", fontWeight: "bold", cursor: "pointer", flexShrink: 0 }}>{row.is_calculado ? "🧮 Calculado" : "✍️ Manual"}</button>
+                                
+                                <input 
+                                  type="text" 
+                                  placeholder="+ Añadir título maestro para impresión..." 
+                                  defaultValue={row.subtitulo_impresion} 
+                                  onBlur={(e) => handleActualizarSubtitulo(row.analito_id, e.target.value)} 
+                                  style={{ flex: 1, marginLeft: "8px", border: "1px dashed #cbd5e1", background: "#f8fafc", color: "#0ea5e9", fontSize: "10px", outline: "none", padding: "2px 6px", borderRadius: "4px", fontStyle: "italic", transition: "0.2s" }} 
+                                  onFocus={(e) => { e.target.style.border = "1px solid #0ea5e9"; e.target.style.background = "#fff"; }} 
+                                  onBlurCapture={(e) => { e.target.style.border = "1px dashed #cbd5e1"; e.target.style.background = "#f8fafc"; }} 
+                                />
                               </div>
+
                               {row.is_calculado && (
                                 <div style={{ backgroundColor: "#f8fafc", border: "1px solid #bae6fd", borderRadius: "6px", padding: "6px", display: "flex", flexDirection: "column", gap: "4px" }}>
                                   <input type="text" value={row.formula_calculo || ""} onChange={(e) => updateRow(row.rowKey, "formula_calculo", e.target.value)} placeholder="Fórmula. Ej: [COLESTEROL] - [HDL]" className="cell-input" style={{ backgroundColor: "#fff", fontFamily: "monospace", fontSize: "11px", width: "100%", border: "1px solid #cbd5e1" }} />

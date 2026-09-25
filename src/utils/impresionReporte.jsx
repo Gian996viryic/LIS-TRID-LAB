@@ -179,13 +179,21 @@ const ReportePDF = ({ orden, validador, mapaNombres, groupedResults, qrUrl, cult
                   const analitoUpper = String(r.nombre_analito || "").toUpperCase().trim();
 
                   let subTitle = null;
-                  if (isOrinaArea) {
-                      if (analitoUpper === "COLOR") subTitle = "EXAMEN FÍSICO Y QUÍMICO";
-                      if (analitoUpper === "CÉLULAS EPITELIALES ESCAMOSAS") subTitle = "EXAMEN MICROSCÓPICO (SEDIMENTO)";
-                  } else if (isHecesArea) {
-                      if (analitoUpper === "COLOR") subTitle = "EXAMEN MACROSCÓPICO";
-                      if (analitoUpper === "LEUCOCITOS") subTitle = "EXAMEN MICROSCÓPICO";
-                  }
+
+// Primero, verificamos si configuraste un título maestro dinámico en la base de datos
+if (r.subtitulo_impresion && String(r.subtitulo_impresion).trim() !== "") {
+    subTitle = String(r.subtitulo_impresion).toUpperCase().trim();
+} 
+// Si no hay título maestro configurado, usamos los clásicos por defecto para Orina y Heces
+else {
+    if (isOrinaArea) {
+        if (analitoUpper === "COLOR") subTitle = "EXAMEN FÍSICO Y QUÍMICO";
+        if (analitoUpper === "CÉLULAS EPITELIALES ESCAMOSAS") subTitle = "EXAMEN MICROSCÓPICO (SEDIMENTO)";
+    } else if (isHecesArea) {
+        if (analitoUpper === "COLOR") subTitle = "EXAMEN MACROSCÓPICO";
+        if (analitoUpper === "LEUCOCITOS") subTitle = "EXAMEN MICROSCÓPICO";
+    }
+}
 
                   const filaAnalito = (
                     <View>
