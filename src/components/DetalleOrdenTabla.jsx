@@ -108,10 +108,25 @@ export default function DetalleOrdenTabla({
           const showExamHeader = isTrueProfile && lastExamName !== currentExamName && !isOrinaArea && !isHecesArea;
           lastExamName = currentExamName;
 
+          // 🚀 PASO 5: Determinación dinámica del subtítulo a imprimir
           const isFirstOrina = isOrinaArea && row.nombre_analito === "Color";
           const isMicroOrina = isOrinaArea && row.nombre_analito === "Células Epiteliales Escamosas";
           const isFirstHeces = isHecesArea && row.nombre_analito === "Color";
           const isMicroHeces = isHecesArea && row.nombre_analito === "Leucocitos";
+
+          let tituloEspecialAImprimir = null;
+          
+          if (row.subtitulo_impresion && String(row.subtitulo_impresion).trim() !== "") {
+              tituloEspecialAImprimir = String(row.subtitulo_impresion).toUpperCase();
+          } else if (isFirstOrina) {
+              tituloEspecialAImprimir = "EXAMEN FÍSICO Y QUÍMICO";
+          } else if (isMicroOrina) {
+              tituloEspecialAImprimir = "EXAMEN MICROSCÓPICO (SEDIMENTO)";
+          } else if (isFirstHeces) {
+              tituloEspecialAImprimir = "EXAMEN MACROSCÓPICO";
+          } else if (isMicroHeces) {
+              tituloEspecialAImprimir = "EXAMEN MICROSCÓPICO";
+          }
 
           const rawRefText = referenciaTexto(row);
           const refEsLarga = rawRefText.length > 20;
@@ -124,10 +139,14 @@ export default function DetalleOrdenTabla({
               {showAreaHeader && (<tr><td colSpan="20" style={{ background: "#0f172a", fontWeight: "900", color: "#f8fafc", textAlign: "center", padding: "6px", fontSize: "12px", textTransform: "uppercase", letterSpacing: "1px" }}>🧪 {currentArea}</td></tr>)}
               {showExamHeader && (<tr style={{ background: "#e0f2fe", borderTop: "2px solid #bae6fd" }}><td colSpan="20" style={{ fontWeight: "800", color: "#0284c7", textAlign: "left", padding: "4px 12px", fontSize: "11px", textTransform: "uppercase" }}>📋 {currentExamName}</td></tr>)}
               
-              {isFirstOrina && (<tr style={{ background: "#f8fafc" }}><td colSpan="20" style={{ fontWeight: "bold", color: "#475569", textAlign: "center", padding: "4px", fontSize: "10px", fontStyle: "italic" }}>--- EXAMEN FÍSICO Y QUÍMICO ---</td></tr>)}
-              {isMicroOrina && (<tr style={{ background: "#f8fafc" }}><td colSpan="20" style={{ fontWeight: "bold", color: "#475569", textAlign: "center", padding: "4px", fontSize: "10px", fontStyle: "italic" }}>--- EXAMEN MICROSCÓPICO (SEDIMENTO) ---</td></tr>)}
-              {isFirstHeces && (<tr style={{ background: "#f8fafc" }}><td colSpan="20" style={{ fontWeight: "bold", color: "#475569", textAlign: "center", padding: "4px", fontSize: "10px", fontStyle: "italic" }}>--- EXAMEN MACROSCÓPICO ---</td></tr>)}
-              {isMicroHeces && (<tr style={{ background: "#f8fafc" }}><td colSpan="20" style={{ fontWeight: "bold", color: "#475569", textAlign: "center", padding: "4px", fontSize: "10px", fontStyle: "italic" }}>--- EXAMEN MICROSCÓPICO ---</td></tr>)}
+              {/* 🚀 IMPRESIÓN DEL TÍTULO DINÁMICO */}
+              {tituloEspecialAImprimir && (
+                 <tr style={{ background: "#f8fafc" }}>
+                    <td colSpan="20" style={{ fontWeight: "bold", color: "#475569", textAlign: "center", padding: "4px", fontSize: "10px", fontStyle: "italic" }}>
+                        --- {tituloEspecialAImprimir} ---
+                    </td>
+                 </tr>
+              )}
 
               <tr className={row.local_selected ? "selected" : ""}>
                 <td style={{ textAlign: "center" }}><input type="checkbox" checked={row.local_selected} onChange={(e) => updateResultado(row.id, "local_selected", e.target.checked)} /></td>
@@ -167,7 +186,6 @@ export default function DetalleOrdenTabla({
                 <td style={{ color: "#555", fontStyle: "italic", textAlign: "center" }}>MANUAL</td>
                 <td style={{ color: "#555", textAlign: "center" }}>{row.editado_por ? (userNames[row.editado_por] || "SISTEMA") : ""}</td>
                 
-                {/* 🚀 HISTÓRICOS COMPACTOS CON TOOLTIP (HOVER) */}
                 <td 
                   title={row.local_hist1 !== "" ? `Validado el: ${new Date(row.local_hist1_date).toLocaleString()}` : ""}
                   style={{ color: "#4f46e5", fontWeight: "bold", textAlign: "center", background: row.local_hist1 !== "" ? "#eef2ff" : "", cursor: row.local_hist1 !== "" ? "help" : "default" }}

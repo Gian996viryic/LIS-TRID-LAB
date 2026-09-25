@@ -68,7 +68,6 @@ export default function DetalleOrden({ ordenInicial, idsPendientes, areaGlobal, 
   const deuda = totalFactura - abonoReal;
   const tieneDeuda = !estaPagada && deuda > 0;
 
-  // 🚀 CÁLCULO DE NAVEGACIÓN EN COLA
   const enCola = idsPendientes && idsPendientes.length > 0;
   const currentIndex = enCola ? idsPendientes.indexOf(orden.id) : -1;
   const posicionActual = currentIndex + 1;
@@ -83,6 +82,7 @@ export default function DetalleOrden({ ordenInicial, idsPendientes, areaGlobal, 
     const { data: authData } = await supabase.auth.getUser();
     const currentUser = authData?.user;
 
+    // Se mantiene la consulta original
     const { data: resultadosDB, error } = await supabase.from("lab_orden_resultados").select(`id, orden_id, orden_examen_id, examen_id, analito_id, codigo_examen, nombre_examen, nombre_analito, grupo_nombre, unidad, rango_texto, rango_min, rango_max, resultado_texto, resultado_numero, resultado_flag, observacion, comentario_resultado, validado, validado_por, validado_at, editado_por, editado_at, orden_visual, mostrar_en_reporte, repeticion`).eq("orden_id", ordenId);
     if (error) { toast.error("Error al cargar resultados"); setLoadingDetalle(false); return; }
 
@@ -90,15 +90,21 @@ export default function DetalleOrden({ ordenInicial, idsPendientes, areaGlobal, 
     let catalogoData = []; let examenesConfig = [];
 
     if (examenesIds.length > 0) {
-      const resCat = await supabase.from("lab_catalogo_analitos").select("id, formula_calculo, opciones_predefinidas").in("examen_id", examenesIds);
+      // 🚀 PASO 2: Se agregó subtitulo_impresion a la consulta del catálogo
+      const resCat = await supabase.from("lab_catalogo_analitos").select("id, formula_calculo, opciones_predefinidas, subtitulo_impresion").in("examen_id", examenesIds);
       if (resCat.data) catalogoData = resCat.data;
       
       const resEx = await supabase.from("examenes").select("id, orden_impresion, lab_areas(*)").in("id", examenesIds);
       if (resEx.data) examenesConfig = resEx.data;
     }
 
-    const localCacheFormulas = {}; const localCacheOpciones = {};
-    catalogoData.forEach(c => { localCacheFormulas[c.id] = c.formula_calculo; localCacheOpciones[c.id] = c.opciones_predefinidas; });
+    // 🚀 PASO 3: Se guarda el subtítulo en el caché local
+    const localCacheFormulas = {}; const localCacheOpciones = {}; const localCacheSubtitulos = {};
+    catalogoData.forEach(c => { 
+      localCacheFormulas[c.id] = c.formula_calculo; 
+      localCacheOpciones[c.id] = c.opciones_predefinidas; 
+      localCacheSubtitulos[c.id] = c.subtitulo_impresion; 
+    });
 
     const localCacheAreas = {};
     examenesConfig.forEach(ex => {
@@ -181,6 +187,7 @@ export default function DetalleOrden({ ordenInicial, idsPendientes, areaGlobal, 
       const finalTuboNombre = dbConfig.tubo_nombre || tuboInfoFallback?.tubo || "SUERO";
       const fallbackArea = dbConfig.area_nombre || tuboInfoFallback?.area || "OTROS";
       
+      // 🚀 PASO 4: Inyectamos subtitulo_impresion en el mapeo final
       return {
         ...r, tubo_id: finalTuboId, tubo_nombre: finalTuboNombre, db_area_nombre: fallbackArea,
         db_area_orden: dbConfig.area_orden, db_examen_orden: dbConfig.examen_orden, local_resultado_numero: valorMostrar, local_observacion: r.observacion || "", 
@@ -188,7 +195,8 @@ export default function DetalleOrden({ ordenInicial, idsPendientes, areaGlobal, 
         local_hist1: h1, local_hist1_date: h1_date, 
         local_hist2: h2, local_hist2_date: h2_date, 
         local_validado: !!r.validado, local_selected: false, is_dirty: false, is_calculado: !!(r.analito_id && localCacheFormulas[r.analito_id]), 
-        formula_calculo: r.analito_id ? localCacheFormulas[r.analito_id] : null, opciones_predefinidas: r.analito_id ? (localCacheOpciones[r.analito_id] || "") : ""
+        formula_calculo: r.analito_id ? localCacheFormulas[r.analito_id] : null, opciones_predefinidas: r.analito_id ? (localCacheOpciones[r.analito_id] || "") : "",
+        subtitulo_impresion: r.analito_id ? (localCacheSubtitulos[r.analito_id] || "") : "" 
       };
     });
 
@@ -266,7 +274,6 @@ export default function DetalleOrden({ ordenInicial, idsPendientes, areaGlobal, 
     });
   }
 
-  // 🚀 AHORA ACEPTA LA BANDERA autoJump
  async function guardarCambios(modo = "GUARDAR_SOLO", autoJump = false) {
     if ((modo === "VALIDAR_TODO" || modo === "VALIDAR_SELECCION") && tieneDeuda) return toast.error(`Bloqueado: La orden tiene un saldo pendiente de $${deuda.toFixed(2)}`, { icon: "🔒", duration: 4000 });
     setGuardando(true); const toastId = toast.loading("Procesando...");
@@ -327,7 +334,6 @@ export default function DetalleOrden({ ordenInicial, idsPendientes, areaGlobal, 
       toast.success("Cambios guardados con éxito", { id: toastId }); 
       cargarDetalle(orden.id); 
       
-      // 🚀 EJECUCIÓN DEL AUTO-JUMP AL FINALIZAR EL GUARDADO
       if (autoJump && typeof onNavegarCola === 'function') {
         onNavegarCola('next');
       }
@@ -335,7 +341,6 @@ export default function DetalleOrden({ ordenInicial, idsPendientes, areaGlobal, 
     } catch (e) { toast.error(`Error: ${e.message || 'No se pudo guardar'}`, { id: toastId }); } finally { setGuardando(false); }
   }
 
-  // 🚀 FUNCIONES DE NAVEGACIÓN MANUAL (PARA LAS FLECHAS)
   function handlePrev() {
     if (cambiosSinGuardar && !window.confirm("⚠️ Tienes cambios sin guardar.\n\n¿Deseas saltar a la orden anterior y perderlos?")) return;
     if (typeof onNavegarCola === 'function') onNavegarCola('prev');
@@ -483,7 +488,7 @@ export default function DetalleOrden({ ordenInicial, idsPendientes, areaGlobal, 
         orden={orden} intentarCerrar={intentarCerrar} tieneDeuda={tieneDeuda} deuda={deuda} 
         tieneMicro={tieneMicro} activeMainTab={activeMainTab} setActiveMainTab={setActiveMainTab} 
         enCola={enCola} posicionActual={posicionActual} totalCola={totalCola} 
-        handlePrev={handlePrev} handleNext={handleNext} // 🚀 PROPS DE NAVEGACIÓN PASADOS AL ENCABEZADO
+        handlePrev={handlePrev} handleNext={handleNext} 
       />
 
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", background: "#fff", border: tieneMicro ? "1px solid #9ca3af" : "none", borderTop: tieneMicro ? "1px solid #9ca3af" : "none", zIndex: 1, position: "relative" }}>
@@ -509,7 +514,7 @@ export default function DetalleOrden({ ordenInicial, idsPendientes, areaGlobal, 
                     <DetalleOrdenBotones 
                       groupedResultadosLength={groupedResultados.length} guardando={guardando} algunResultadoLleno={algunResultadoLleno} tieneDeuda={tieneDeuda} haySeleccionados={haySeleccionados}
                       guardarCambios={guardarCambios} intentarCerrar={intentarCerrar} repetirTodasSeleccionadas={repetirTodasSeleccionadas} handleImprimir={handleImprimir}
-                      setMostrarHistorial={setMostrarHistorial} enCola={enCola} // 🚀 SE PASA EL ESTADO A LOS BOTONES
+                      setMostrarHistorial={setMostrarHistorial} enCola={enCola} 
                       setShowModalEnvio={() => {
                         if (tieneDeuda) return toast.error("Opción bloqueada por saldo pendiente", { icon: "🔒" });
                         const validados = resultados.filter(r => r.local_validado || r.validado);
