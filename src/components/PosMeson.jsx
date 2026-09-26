@@ -305,6 +305,18 @@ export default function PosMeson({ onClose, onSuccess, listaConvenios }) {
     let nuevosExamenes = [...carritoExamenes];
     let toastMensaje = "";
 
+    // 🚀 NUEVA REGLA: PSA LIBRE y PSA TOTAL
+    // 1. Si intentas agregar PSA Total y ya está el Libre: Bloqueo.
+    if (ex.codigo === 'PSA' && nuevosExamenes.some(item => item.codigo === 'PSAL')) {
+      return toast.error(`Bloqueado: Ya tienes PSA Libre en la orden (el cual ya incluye PSA Total).`, { icon: "🛡️" });
+    }
+    // 2. Si intentas agregar PSA Libre y ya estaba el Total: Lo reemplaza inteligentemente.
+    if (ex.codigo === 'PSAL') {
+      const teniaPsaTotal = nuevosExamenes.some(i => i.codigo === 'PSA');
+      nuevosExamenes = nuevosExamenes.filter(item => item.codigo !== 'PSA');
+      if (teniaPsaTotal) toastMensaje = "PSA Libre añadido. Se removió PSA Total individual (ya está incluido).";
+    }
+
     // Reglas de negocio (PTF, HI, ROMA, UDC)
     if (ex.codigo === 'PTF') {
       const teniaAlbGlob = nuevosExamenes.some(i => i.codigo === 'ALB' || i.codigo === 'GBL');
