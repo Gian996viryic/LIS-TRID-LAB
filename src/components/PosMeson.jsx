@@ -397,6 +397,16 @@ export default function PosMeson({ onClose, onSuccess, listaConvenios }) {
         toastMensaje = `Lípidos Totales añadido. Se auto-incluyó: ${agregadosLT.join(" y ")} (Necesarios para el cálculo).`;
       }
     }
+    // 🚀 NUEVA REGLA: CISTATINA C (CISC-C) AUTO-INCLUYE CREATININA (CRT)
+    if (ex.codigo === 'CISC-C') {
+      if (!nuevosExamenes.some(item => item.codigo === 'CRT')) {
+        const crtData = await fetchExamenPorCodigo('CRT');
+        if (crtData) { 
+          nuevosExamenes.push(crtData); 
+          toastMensaje = "Cistatina C añadida. Se auto-incluyó Creatinina (Necesaria para el cálculo TFG)."; 
+        }
+      }
+    }
     // Reglas de negocio (PTF, HI, ROMA, UDC)
     if (ex.codigo === 'PTF') {
       const teniaAlbGlob = nuevosExamenes.some(i => i.codigo === 'ALB' || i.codigo === 'GBL');
