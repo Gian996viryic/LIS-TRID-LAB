@@ -329,6 +329,28 @@ export default function PosMeson({ onClose, onSuccess, listaConvenios }) {
         toastMensaje = "Panel de Electrolitos añadido. Se removieron los electrolitos individuales (ya incluidos).";
       }
     }
+    // 🚀 NUEVA REGLA: HEMOGRAMA COMPLETO (BHC) vs HEMOGLOBINA (HB) y HEMATOCRITO (HCT)
+    const codigosHemo = ['HB', 'HCT'];
+    if (codigosHemo.includes(ex.codigo) && nuevosExamenes.some(item => item.codigo === 'BHC')) {
+      return toast.error(`Bloqueado: Ya tienes el Hemograma Completo (BHC) en la orden.`, { icon: "🛡️" });
+    }
+    if (ex.codigo === 'BHC') {
+      const teniaHemo = nuevosExamenes.some(i => codigosHemo.includes(i.codigo));
+      if (teniaHemo) {
+        nuevosExamenes = nuevosExamenes.filter(item => !codigosHemo.includes(item.codigo));
+        toastMensaje = "Hemograma Completo añadido. Se removieron Hemoglobina/Hematocrito (ya incluidos).";
+      }
+    }
+    // 🚀 NUEVA REGLA: BUN (BUN-S) AUTO-INCLUYE UREA (U)
+    if (ex.codigo === 'BUN-S') {
+      if (!nuevosExamenes.some(item => item.codigo === 'U')) {
+        const ureaData = await fetchExamenPorCodigo('U');
+        if (ureaData) { 
+          nuevosExamenes.push(ureaData); 
+          toastMensaje = "BUN añadido. Se auto-incluyó UREA (Necesaria para el cálculo)."; 
+        }
+      }
+    }
     // Reglas de negocio (PTF, HI, ROMA, UDC)
     if (ex.codigo === 'PTF') {
       const teniaAlbGlob = nuevosExamenes.some(i => i.codigo === 'ALB' || i.codigo === 'GBL');
