@@ -88,7 +88,7 @@ export default function PosMeson({ onClose, onSuccess, listaConvenios }) {
   const [estadoPago, setEstadoPago] = useState("PAGADO"); 
   const [metodoPago, setMetodoPago] = useState("tc");
   const [montoAbono, setMontoAbono] = useState("");
-// 🚀 MAGIA: Aplicar el recargo de Tarjeta (TC5) automáticamente al abrir la caja
+
   useEffect(() => {
     async function aplicarTC5PorDefecto() {
       try {
@@ -103,13 +103,11 @@ export default function PosMeson({ onClose, onSuccess, listaConvenios }) {
           setCuponAplicado(data);
           setCuponInput(data.codigo);
         }
-      } catch (err) {
-        console.error("No se pudo cargar el cupón por defecto", err);
-      }
+      } catch (err) {}
     }
-    // Solo se autoejecuta cuando se abre una caja nueva
     aplicarTC5PorDefecto();
   }, []);
+
   async function buscarCotizacionGuardada(e) {
     if (e.key !== 'Enter' || !codigoBusquedaCotizacion.trim()) return;
     e.preventDefault();
@@ -138,9 +136,7 @@ export default function PosMeson({ onClose, onSuccess, listaConvenios }) {
         setRegistroProcedencia(data.cliente.procedencia || "AMBULATORIO");
       }
 
-      if (data.items && Array.isArray(data.items)) {
-        setCarritoExamenes(data.items);
-      }
+      if (data.items && Array.isArray(data.items)) setCarritoExamenes(data.items);
 
       if (data.cupon_code && data.cupon_code !== 'N/A' && data.cupon_code !== null) {
         const { data: cupData } = await supabase.from('cupones').select('*').eq('codigo', data.cupon_code).maybeSingle();
@@ -198,15 +194,14 @@ export default function PosMeson({ onClose, onSuccess, listaConvenios }) {
   }, [registroCedula, registroProcedencia]);
 
   async function cargarDatosPacienteRecurrente() {
-    // 👇 AHORA PEDIMOS DIRECCIÓN Y CIUDAD A LA BASE DE DATOS 👇
     const { data } = await supabase.from("lab_pacientes").select("nombre, sexo, fecha_nacimiento, telefono, correo, direccion, ciudad").eq("cedula", registroCedula.trim()).maybeSingle();
     if (data) {
       if (data.nombre) setRegistroNombre(data.nombre);
       if (data.sexo) setRegistroSexo(data.sexo);
       if (data.telefono) setRegistroTelefono(data.telefono);
       if (data.correo) setRegistroCorreo(data.correo);
-      if (data.direccion) setRegistroDireccion(data.direccion); // <-- Se inyecta al estado
-      if (data.ciudad) setRegistroCiudad(data.ciudad);          // <-- Se inyecta al estado
+      if (data.direccion) setRegistroDireccion(data.direccion); 
+      if (data.ciudad) setRegistroCiudad(data.ciudad);          
       if (data.fecha_nacimiento) {
         setRegistroFechaNacimiento(data.fecha_nacimiento);
         setRegistroEdad(calcularEdad(data.fecha_nacimiento));
@@ -246,22 +241,16 @@ export default function PosMeson({ onClose, onSuccess, listaConvenios }) {
       }
     });
     
-    // 🚀 MAGIA PARA LA TARJETA DE CRÉDITO (TC5) 🚀
     if (cuponAplicado && cuponAplicado.tipo !== 'convenio') {
-      if (cuponAplicado.codigo === 'TC5') {
-        // Lo hacemos negativo para que al restarlo (sub - desc) termine sumando al total
-        desc = -(sub * (Number(cuponAplicado.porcentaje || 0) / 100)); 
-      } else {
-        // Comportamiento normal para descuentos regulares
-        desc = sub * (Number(cuponAplicado.porcentaje || 0) / 100);
-      }
+      if (cuponAplicado.codigo === 'TC5') desc = -(sub * (Number(cuponAplicado.porcentaje || 0) / 100)); 
+      else desc = sub * (Number(cuponAplicado.porcentaje || 0) / 100);
     }
-    
     return { subtotal: sub, descuento: desc, total: sub - desc };
   }, [carritoExamenes, cuponAplicado]);
 
   const saldoPendiente = estadoPago === "ABONO" ? (total - Number(montoAbono || 0)) : (estadoPago === "PAGADO" ? 0 : total);
 
+  // 🚀 AQUÍ: OBTENEMOS EL NOMBRE DEL ÁREA BIEN DE SUPABASE
   useEffect(() => {
     if(busquedaExamen.length < 2) { 
       setResultadosExamenes([]); 
@@ -271,7 +260,10 @@ export default function PosMeson({ onClose, onSuccess, listaConvenios }) {
     const timer = setTimeout(async () => {
       const { data } = await supabase
         .from('examenes')
-        .select('id, codigo, articulo, precio_normal, precio_convenio, orden_impresion, lab_areas(nombre)')
+        .select(`
+          id, codigo, articulo, precio_normal, precio_convenio, orden_impresion,
+          lab_areas (nombre)
+        `)
         .or(`articulo.ilike.%${busquedaExamen}%,codigo.ilike.%${busquedaExamen}%`) 
         .eq('activo', true)
         .limit(15); 
@@ -283,7 +275,6 @@ export default function PosMeson({ onClose, onSuccess, listaConvenios }) {
   }, [busquedaExamen]);
 
   async function aplicarCupon(codigoManual = null) {
-    // MAGIA: Si recibe un código directo (ej. "TC5") usa ese, si no, usa el de la cajita.
     const codigoFinal = typeof codigoManual === 'string' ? codigoManual : cuponInput;
     if (!codigoFinal) return;
 
@@ -295,12 +286,12 @@ export default function PosMeson({ onClose, onSuccess, listaConvenios }) {
     if (data.usos_max && data.usos_count >= data.usos_max) return toast.error("Límite alcanzado", { id: toastId }); 
     
     setCuponAplicado(data);
-    setCuponInput(data.codigo); // Auto-llena la cajita visualmente
+    setCuponInput(data.codigo); 
     toast.success(data.tipo === 'convenio' ? "¡Convenio activado!" : `¡Recargo/Descuento aplicado!`, { id: toastId });
   }
 
   async function fetchExamenPorCodigo(codigoBuscado) {
-    const { data } = await supabase.from('examenes').select('id, codigo, articulo, precio_normal, precio_convenio, orden_impresion, lab_areas(nombre)').eq('codigo', codigoBuscado).eq('activo', true).limit(1);
+    const { data } = await supabase.from('examenes').select(`id, codigo, articulo, precio_normal, precio_convenio, orden_impresion, lab_areas(nombre)`).eq('codigo', codigoBuscado).eq('activo', true).limit(1);
     return data && data.length > 0 ? data[0] : null;
   }
 
@@ -314,15 +305,14 @@ export default function PosMeson({ onClose, onSuccess, listaConvenios }) {
     let nuevosExamenes = [...carritoExamenes];
     let toastMensaje = "";
 
+    // Reglas de negocio (PTF, HI, ROMA, UDC)
     if (ex.codigo === 'PTF') {
       const teniaAlbGlob = nuevosExamenes.some(i => i.codigo === 'ALB' || i.codigo === 'GBL');
       nuevosExamenes = nuevosExamenes.filter(item => item.codigo !== 'ALB' && item.codigo !== 'GBL');
       if (teniaAlbGlob) toastMensaje = "PTF añadido. Se removió Albúmina/Globulina (ya incluidas).";
     }
-    if ((ex.codigo === 'ALB' || ex.codigo === 'GBL') && nuevosExamenes.some(item => item.codigo === 'PTF')) {
-      toast.error(`Bloqueado: Ya tienes el perfil completo PTF en la orden.`, { icon: "🛡️" });
-      return;
-    }
+    if ((ex.codigo === 'ALB' || ex.codigo === 'GBL') && nuevosExamenes.some(item => item.codigo === 'PTF')) return toast.error(`Bloqueado: Ya tienes el perfil completo PTF en la orden.`, { icon: "🛡️" });
+    
     if (ex.codigo === 'HI') {
       const teniaInsulina = nuevosExamenes.some(i => i.codigo === 'INSL');
       nuevosExamenes = nuevosExamenes.filter(item => item.codigo !== 'INSL');
@@ -332,10 +322,8 @@ export default function PosMeson({ onClose, onSuccess, listaConvenios }) {
         if (glData) { nuevosExamenes.push(glData); toastMensaje = "HI añadido. Se auto-incluyó Glucosa (Necesaria para el cálculo)."; }
       }
     }
-    if (ex.codigo === 'INSL' && nuevosExamenes.some(item => item.codigo === 'HI')) {
-      toast.error(`Bloqueado: Ya tienes el perfil HOMA-IR.`, { icon: "🛡️" });
-      return;
-    }
+    if (ex.codigo === 'INSL' && nuevosExamenes.some(item => item.codigo === 'HI')) return toast.error(`Bloqueado: Ya tienes el perfil HOMA-IR.`, { icon: "🛡️" });
+    
     if (ex.codigo === 'ROMA') { 
       const teniaHe4 = nuevosExamenes.some(i => i.codigo === 'HE-4');
       nuevosExamenes = nuevosExamenes.filter(item => item.codigo !== 'HE-4');
@@ -345,10 +333,8 @@ export default function PosMeson({ onClose, onSuccess, listaConvenios }) {
         if (caData) { nuevosExamenes.push(caData); toastMensaje = "Índice ROMA añadido. Se auto-incluyó marcador CA 125."; }
       }
     }
-    if (ex.codigo === 'HE-4' && nuevosExamenes.some(item => item.codigo === 'ROMA')) {
-      toast.error(`Bloqueado: Ya tienes el perfil Índice ROMA.`, { icon: "🛡️" });
-      return;
-    }
+    if (ex.codigo === 'HE-4' && nuevosExamenes.some(item => item.codigo === 'ROMA')) return toast.error(`Bloqueado: Ya tienes el perfil Índice ROMA.`, { icon: "🛡️" });
+    
     if (ex.codigo === 'UDC') { 
       let agregadosStr = [];
       if (!nuevosExamenes.some(item => item.codigo === 'CRT')) {
@@ -371,9 +357,7 @@ export default function PosMeson({ onClose, onSuccess, listaConvenios }) {
     setTimeout(() => { searchInputRef.current?.focus(); }, 10);
   }
 
-  function eliminarDelCarrito(id) {
-    setCarritoExamenes(carritoExamenes.filter(item => item.id !== id));
-  }
+  function eliminarDelCarrito(id) { setCarritoExamenes(carritoExamenes.filter(item => item.id !== id)); }
 
   function handleSearchKeyDown(e) {
     if (e.key === 'Enter') {
@@ -381,13 +365,8 @@ export default function PosMeson({ onClose, onSuccess, listaConvenios }) {
       if (resultadosExamenes.length > 0 && highlightedIndex >= 0 && highlightedIndex < resultadosExamenes.length) {
         agregarExamenAlCarrito(resultadosExamenes[highlightedIndex]);
       }
-    } else if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setHighlightedIndex(prev => (prev < resultadosExamenes.length - 1 ? prev + 1 : prev));
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setHighlightedIndex(prev => (prev > 0 ? prev - 1 : 0));
-    }
+    } else if (e.key === 'ArrowDown') { e.preventDefault(); setHighlightedIndex(prev => (prev < resultadosExamenes.length - 1 ? prev + 1 : prev)); } 
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setHighlightedIndex(prev => (prev > 0 ? prev - 1 : 0)); }
   }
 
   async function generarCotizacionPDF() {
@@ -403,33 +382,17 @@ export default function PosMeson({ onClose, onSuccess, listaConvenios }) {
       const tokenSeguridad = crypto.randomUUID();
 
       const datosPDF = {
-        codigo: codigoSecuencial,
-        fecha: fechaActual.toLocaleDateString('es-EC'),
-        validoHasta: fechaValidez.toLocaleDateString('es-EC'),
-        verifyToken: tokenSeguridad,
+        codigo: codigoSecuencial, fecha: fechaActual.toLocaleDateString('es-EC'), validoHasta: fechaValidez.toLocaleDateString('es-EC'), verifyToken: tokenSeguridad,
         paciente: {
-          nombre: registroNombre,
-          cedula: registroCedula,
-          edad: registroEdad,
-          sexo: registroSexo,
-          correo: registroCorreo,
-          telefono: registroTelefono,
-          procedencia: registroProcedencia,
-          doctor: registroDoctor,
-          direccion: registroDireccion,
-          ciudad: registroCiudad
+          nombre: registroNombre, cedula: registroCedula, edad: registroEdad, sexo: registroSexo, correo: registroCorreo,
+          telefono: registroTelefono, procedencia: registroProcedencia, doctor: registroDoctor, direccion: registroDireccion, ciudad: registroCiudad
         },
         examenes: carritoExamenes.map(ex => {
           const pNormal = Number(ex.precio_normal || 0);
           const pFinal = (cuponAplicado && cuponAplicado.tipo === 'convenio') ? Number(ex.precio_convenio || pNormal) : pNormal;
           return { ...ex, precioFinal: pFinal };
         }),
-        subtotal: subtotal,
-        iva: 0,
-        total: total,
-        cuponMode: cuponAplicado ? cuponAplicado.tipo : "none",
-        descuento: descuento,
-        totalNormal: subtotal
+        subtotal: subtotal, iva: 0, total: total, cuponMode: cuponAplicado ? cuponAplicado.tipo : "none", descuento: descuento, totalNormal: subtotal
       };
 
       const pdfBlob = await generarPDFCotizacion(datosPDF);
@@ -449,9 +412,7 @@ export default function PosMeson({ onClose, onSuccess, listaConvenios }) {
       saveAs(pdfBlob, `Cotizacion_${codigoSecuencial}.pdf`);
       toast.success("¡Cotización guardada exitosamente!", { id: toastId });
       onClose();
-    } catch (err) {
-      toast.error(err.message, { id: toastId });
-    }
+    } catch (err) { toast.error(err.message, { id: toastId }); }
   }
 
   async function guardarNuevaPeticion(e) {
@@ -468,16 +429,13 @@ export default function PosMeson({ onClose, onSuccess, listaConvenios }) {
           const { data: pacienteExistente, error: errExistencia } = await supabase.from('lab_pacientes').select('cedula, telefono, correo').eq('cedula', cedulaLimpia).maybeSingle();
           if (!pacienteExistente && !errExistencia) {
             const pinAleatorio = Math.floor(100000 + Math.random() * 900000).toString(); 
-            // 👇 AHORA SE GUARDAN DIRECCIÓN Y CIUDAD AL CREAR 👇
             const payloadPaciente = { 
               cedula: cedulaLimpia, nombre: registroNombre.trim().toUpperCase(), sexo: registroSexo === "N/A" ? null : registroSexo, 
               pin_secreto: pinAleatorio, telefono: registroTelefono?.trim() || null, correo: registroCorreo?.trim() || null, 
               fecha_nacimiento: registroFechaNacimiento || null, direccion: registroDireccion?.trim().toUpperCase() || null, ciudad: registroCiudad?.trim().toUpperCase() || "GUAYAQUIL" 
             };
-            const { error: errPac } = await supabase.from('lab_pacientes').insert([payloadPaciente]);
-            if (errPac) console.error("Error al registrar paciente web:", errPac);
+            await supabase.from('lab_pacientes').insert([payloadPaciente]);
           } else if (pacienteExistente) {
-            // 👇 AHORA SE ACTUALIZAN DIRECCIÓN Y CIUDAD AL EDITAR 👇
             const updates = { 
               nombre: registroNombre.trim().toUpperCase(), sexo: registroSexo === "N/A" ? null : registroSexo, 
               fecha_nacimiento: registroFechaNacimiento || null, direccion: registroDireccion?.trim().toUpperCase() || null, ciudad: registroCiudad?.trim().toUpperCase() || "GUAYAQUIL" 
@@ -556,11 +514,21 @@ export default function PosMeson({ onClose, onSuccess, listaConvenios }) {
           const regExamen = ordExData.find(oe => oe.examen_id === analito.examen_id);
           const rangosDeEsteAnalito = rangosAvanzadosTodos.filter(r => r.analito_id === analito.id);
           const rangoIdeal = calcularRangoIdeal(analito, rangosDeEsteAnalito, registroSexo, registroEdad);
+          
+          // 🚀 AQUÍ SE ASIGNA OFICIALMENTE LA MACROÁREA BASADO EN LA BD
+          let nombreAreaBD = "OTROS";
+          if (exPadre?.lab_areas) {
+            // Manejamos tanto si es array o si es un simple string/objeto devuelto por el JOIN
+            if (Array.isArray(exPadre.lab_areas)) nombreAreaBD = exPadre.lab_areas[0]?.nombre || "OTROS";
+            else if (typeof exPadre.lab_areas === 'string') nombreAreaBD = exPadre.lab_areas;
+            else if (exPadre.lab_areas.nombre) nombreAreaBD = exPadre.lab_areas.nombre;
+          }
 
           return {
              orden_id: ordenCreada.id, orden_examen_id: regExamen ? regExamen.id : null, examen_id: analito.examen_id, analito_id: analito.id, codigo_examen: exPadre?.codigo, nombre_examen: exPadre?.articulo,
              nombre_analito: analito.nombre_analito, unidad: rangoIdeal.unidad, rango_min: rangoIdeal.rango_min, rango_max: rangoIdeal.rango_max, rango_texto: rangoIdeal.rango_texto,
-             grupo_nombre: Array.isArray(exPadre?.lab_areas) ? exPadre.lab_areas[0]?.nombre : (exPadre?.lab_areas?.nombre || 'OTROS'), orden_visual: analito.orden_visual, validado: false, mostrar_en_reporte: true
+             grupo_nombre: nombreAreaBD.toUpperCase(), // 🚀 Guardado como Mayúscula
+             orden_visual: analito.orden_visual, validado: false, mostrar_en_reporte: true
           };
         });
         const { error: errRes } = await supabase.from('lab_orden_resultados').insert(payloadResultados);
@@ -573,6 +541,35 @@ export default function PosMeson({ onClose, onSuccess, listaConvenios }) {
 
       toast.success(`¡Orden generada!`, { id: toastId }); onSuccess(); onClose();
     } catch (error) { toast.error("Error al procesar: " + error.message, { id: toastId }); }
+  }
+
+  // 🚀 FUNCIÓN TEMPORAL DE EMERGENCIA PARA CORREGIR EL HISTORIAL VIEJO
+  async function forzarSincronizacionHistorial() {
+    if (!window.confirm("¿Seguro que deseas forzar la sincronización? Esto reescribirá el grupo de todos los exámenes pasados basándose en la configuración actual.")) return;
+    
+    const toastId = toast.loading("Resincronizando toda la base de datos...");
+    
+    try {
+      // 1. Obtener la configuración actual de todos los exámenes y sus áreas
+      const { data: todosLosExamenes, error: errEx } = await supabase.from("examenes").select("id, lab_areas(nombre)");
+      if (errEx || !todosLosExamenes) throw new Error("Fallo al leer exámenes");
+
+      // 2. Por cada examen, ir a la tabla de resultados pasados y cambiarle el área a la correcta
+      for (const ex of todosLosExamenes) {
+         let areaNombre = "OTROS";
+         if (ex.lab_areas) {
+            if (Array.isArray(ex.lab_areas)) areaNombre = ex.lab_areas[0]?.nombre || "OTROS";
+            else if (typeof ex.lab_areas === 'string') areaNombre = ex.lab_areas;
+            else if (ex.lab_areas.nombre) areaNombre = ex.lab_areas.nombre;
+         }
+
+         await supabase.from("lab_orden_resultados").update({ grupo_nombre: areaNombre.toUpperCase() }).eq("examen_id", ex.id);
+      }
+
+      toast.success("¡Historial sincronizado! Recarga la página y revisa la pestaña DROGAS.", { id: toastId, duration: 6000 });
+    } catch (e) {
+      toast.error(e.message, { id: toastId });
+    }
   }
 
   return (
@@ -591,6 +588,12 @@ export default function PosMeson({ onClose, onSuccess, listaConvenios }) {
                 onKeyDown={buscarCotizacionGuardada}
                 style={{ padding: "4px 8px", borderRadius: "4px", border: "none", fontSize: "11px", width: "160px", outline: "none", color: "#0f172a" }}
              />
+             
+             {/* 🚀 EL BOTÓN DE SINCRONIZACIÓN TEMPORAL */}
+             <button type="button" onClick={forzarSincronizacionHistorial} title="Corrige órdenes pasadas si cambiaste las áreas." style={{ marginLeft: "10px", padding: "4px 8px", fontSize: "10px", background: "#f59e0b", border: "none", borderRadius: "4px", color: "white", cursor: "pointer" }}>
+               ⚡ Sincronizar Pasado
+             </button>
+
           </div>
           <button onClick={onClose} style={{ background: "transparent", border: "none", color: "#ef4444", cursor: "pointer", fontWeight: "bold", fontSize: "16px" }}>✕</button>
         </div>
