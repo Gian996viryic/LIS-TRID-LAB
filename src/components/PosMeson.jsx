@@ -317,6 +317,18 @@ export default function PosMeson({ onClose, onSuccess, listaConvenios }) {
       if (teniaPsaTotal) toastMensaje = "PSA Libre añadido. Se removió PSA Total individual (ya está incluido).";
     }
 
+    // 🚀 NUEVA REGLA: ELECTROLITOS
+    const codigosElectrolitos = ['NA', 'K', 'CL', 'CAIO'];
+    if (codigosElectrolitos.includes(ex.codigo) && nuevosExamenes.some(item => item.codigo === 'NAKCLCA')) {
+      return toast.error(`Bloqueado: Ya tienes el panel de Electrolitos (NA,K,CL,CALCIO) en la orden.`, { icon: "🛡️" });
+    }
+    if (ex.codigo === 'NAKCLCA') {
+      const teniaElectrolitos = nuevosExamenes.some(i => codigosElectrolitos.includes(i.codigo));
+      if (teniaElectrolitos) {
+        nuevosExamenes = nuevosExamenes.filter(item => !codigosElectrolitos.includes(item.codigo));
+        toastMensaje = "Panel de Electrolitos añadido. Se removieron los electrolitos individuales (ya incluidos).";
+      }
+    }
     // Reglas de negocio (PTF, HI, ROMA, UDC)
     if (ex.codigo === 'PTF') {
       const teniaAlbGlob = nuevosExamenes.some(i => i.codigo === 'ALB' || i.codigo === 'GBL');
