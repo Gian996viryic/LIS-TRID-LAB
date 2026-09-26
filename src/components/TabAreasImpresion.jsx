@@ -92,6 +92,46 @@ export default function TabAreasImpresion({ isDirty, setIsDirty }) {
     toast.success("Macroárea creada exitosamente", { id: toastId });
   }
 
+  // 🚀 NUEVA FUNCIÓN: Actualizar nombre de la macroárea
+  async function handleActualizarNombreArea(area_id, nuevoNombre) {
+    if (!nuevoNombre || !nuevoNombre.trim()) return;
+    const nombreClean = nuevoNombre.trim().toUpperCase();
+    const area = areasLista.find(a => a.id === area_id);
+    if (area && area.nombre === nombreClean) return;
+
+    const toastId = toast.loading("Actualizando nombre...");
+    const { error } = await supabase.from("lab_areas").update({ nombre: nombreClean }).eq("id", area_id);
+    if (!error) {
+       setAreasLista(prev => prev.map(a => a.id === area_id ? { ...a, nombre: nombreClean } : a));
+       toast.success("Nombre actualizado", { id: toastId });
+    } else {
+       toast.error("Error al actualizar nombre", { id: toastId });
+    }
+  }
+
+  // 🚀 NUEVA FUNCIÓN: Eliminar la macroárea
+  async function handleEliminarMacroarea(area_id, nombre) {
+    const examenesAsignados = examenesPlana.filter(e => e.lab_area_id === area_id).length;
+    
+    if (examenesAsignados > 0) {
+      toast.error(`No puedes eliminar "${nombre}" porque tiene ${examenesAsignados} exámenes asignados. Quítalos primero.`);
+      return;
+    }
+
+    if (!window.confirm(`⚠️ ¿ELIMINAR MACROÁREA?\n\n¿Estás seguro de eliminar "${nombre}"? Esta acción no se puede deshacer.`)) return;
+
+    const toastId = toast.loading("Eliminando área...");
+    const { error } = await supabase.from("lab_areas").delete().eq("id", area_id);
+    
+    if (!error) {
+       setAreasLista(prev => prev.filter(a => a.id !== area_id));
+       if (areaFiltroId === area_id) setAreaFiltroId("sin_asignar");
+       toast.success("Área eliminada", { id: toastId });
+    } else {
+       toast.error("Error al eliminar", { id: toastId });
+    }
+  }
+
   return (
     <div style={{ display: "flex", flex: 1, overflow: "hidden", width: "100%" }}>
       {/* COLUMNA IZQUIERDA: ÁREAS */}
@@ -113,9 +153,39 @@ export default function TabAreasImpresion({ isDirty, setIsDirty }) {
               
               {areasLista.map(a => (
                 <div key={a.id} className={`master-list-item ${areaFiltroId === a.id ? "active" : ""}`} onClick={() => setAreaFiltroId(a.id)}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div style={{ fontWeight: "900", fontSize: "13px" }}>{a.nombre}</div>
-                    <input type="number" value={a.orden_visual || ""} onClick={(e) => e.stopPropagation()} onChange={(e) => handleCambioAreaProp(a.id, 'orden_visual', e.target.value)} title="Orden de impresión del Área" style={{ width: "35px", padding: "2px", textAlign: "center", border: "1px solid #cbd5e1", borderRadius: "4px", fontSize: "11px", color: "#0f172a", outline: "none", fontWeight: "bold" }} />
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "6px" }}>
+                    
+                    {/* 🚀 EL NOMBRE AHORA ES UN INPUT EDITABLE */}
+                    <input 
+                      type="text" 
+                      defaultValue={a.nombre} 
+                      onClick={(e) => e.stopPropagation()} 
+                      onBlur={(e) => handleActualizarNombreArea(a.id, e.target.value)} 
+                      title="Clic para editar el nombre de la macroárea"
+                      style={{ 
+                        fontWeight: "900", fontSize: "13px", color: areaFiltroId === a.id ? "#fff" : "#0f172a", 
+                        background: "transparent", border: "1px solid transparent", borderRadius: "4px", 
+                        flex: 1, outline: "none", padding: "2px 4px", transition: "0.2s" 
+                      }} 
+                      onFocus={(e) => { e.target.style.border = "1px solid #0ea5e9"; e.target.style.background = "#fff"; e.target.style.color = "#0f172a"; }} 
+                      onBlurCapture={(e) => { e.target.style.border = "1px solid transparent"; e.target.style.background = "transparent"; e.target.style.color = areaFiltroId === a.id ? "#fff" : "#0f172a"; }} 
+                    />
+
+                    <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                      <input type="number" value={a.orden_visual || ""} onClick={(e) => e.stopPropagation()} onChange={(e) => handleCambioAreaProp(a.id, 'orden_visual', e.target.value)} title="Orden de impresión del Área" style={{ width: "35px", padding: "2px", textAlign: "center", border: "1px solid #cbd5e1", borderRadius: "4px", fontSize: "11px", color: "#0f172a", outline: "none", fontWeight: "bold" }} />
+                      
+                      {/* 🚀 NUEVO BOTÓN DE ELIMINAR */}
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleEliminarMacroarea(a.id, a.nombre); }} 
+                        title="Eliminar Macroárea"
+                        style={{ background: "transparent", border: "none", cursor: "pointer", fontSize: "12px", padding: "2px 4px", borderRadius: "4px" }}
+                        onMouseOver={(e) => e.currentTarget.style.background = "rgba(239, 68, 68, 0.2)"}
+                        onMouseOut={(e) => e.currentTarget.style.background = "transparent"}
+                      >
+                        🗑️
+                      </button>
+                    </div>
+
                   </div>
                   <div style={{ display: "flex", gap: "6px", marginTop: "6px" }} onClick={(e) => e.stopPropagation()}>
                      <input placeholder="ID Tubo (.1)" title="ID del Tubo (Ej: 1, 2, 3)" value={a.tubo_id || ""} onChange={(e) => handleCambioAreaProp(a.id, 'tubo_id', e.target.value)} style={{ width: "80px", padding: "4px", fontSize: "10px", border: "1px solid #cbd5e1", borderRadius: "4px", outline: "none", color: "#0f172a", fontWeight: "bold" }} />

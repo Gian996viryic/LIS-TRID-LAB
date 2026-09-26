@@ -23,6 +23,9 @@ export function asignarAreaY_Tubo(grupo, examen) {
   if (g.includes("MICROBIOLOGIA") || e.includes("CULTIVO") || e.includes("BACTERIA")) return { id: "8", tubo: "MEDIO CULTIVO", area: "MICROBIOLOGIA" };
   if (g.includes("GASOMETRIA") || e.includes("GASES")) return { id: "9", tubo: "JERINGA GASES", area: "GASOMETRIAS" };
   
+  // 🚀 NUEVA REGLA PARA DROGAS
+  if (g.includes("DROGA") || e.includes("DROGA")) return { id: "4", tubo: "ORINA", area: "DROGAS" };
+  
   if (g.includes("BIOQUIMICA") || g.includes("QUIMICA") || e.includes("GLUCOSA") || e.includes("UREA") || e.includes("CREATININA") || e.includes("COLESTEROL") || e.includes("TRIGLICERIDOS") || e.includes("ACIDO URICO") || e.includes("AMILASA") || e.includes("LIPASA") || e.includes("TRANSAMINASA") || e.includes("TGO") || e.includes("TGP") || e.includes("BILIRRUBINA") || e.includes("PROTEINA") || e.includes("CALCIO") || e.includes("HIERRO") || e.includes("MAGNESIO") || e.includes("FOSFORO")) { return { id: "3", tubo: "SUERO", area: "BIOQUIMICA" }; }
   if (g.includes("INMUNO") || g.includes("HORMONA") || e.includes("INSULINA") || e.includes("TIROIDE") || e.includes("TSH") || e.includes("T3") || e.includes("T4") || e.includes("PSA") || e.includes("HCG") || e.includes("BETA") || e.includes("VIH") || e.includes("HEPATITIS") || e.includes("VDRL") || e.includes("TORCH") || e.includes("PROLACTINA") || e.includes("FSH") || e.includes("LH") || g.includes("MARCADORES") || g.includes("SEROLOGIA")) { return { id: "3", tubo: "SUERO", area: "INMUNOQUIMICA" }; }
   
