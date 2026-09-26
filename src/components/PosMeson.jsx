@@ -351,6 +351,52 @@ export default function PosMeson({ onClose, onSuccess, listaConvenios }) {
         }
       }
     }
+    // 🚀 NUEVA REGLA: VLDL (VLDL-CH) AUTO-INCLUYE TRIGLICERIDOS (TGCD)
+    if (ex.codigo === 'VLDL-CH') {
+      if (!nuevosExamenes.some(item => item.codigo === 'TGCD')) {
+        const tgData = await fetchExamenPorCodigo('TGCD');
+        if (tgData) { 
+          nuevosExamenes.push(tgData); 
+          toastMensaje = "VLDL añadido. Se auto-incluyó Triglicéridos (Necesario para el cálculo)."; 
+        }
+      }
+    }
+
+    // 🚀 NUEVA REGLA: LDL (LDLC) AUTO-INCLUYE COLES (CHOL), HDL (HDLC) Y TRIG (TGCD)
+    if (ex.codigo === 'LDLC') {
+      let agregados = [];
+      if (!nuevosExamenes.some(item => item.codigo === 'CHOL')) {
+        const cData = await fetchExamenPorCodigo('CHOL');
+        if (cData) { nuevosExamenes.push(cData); agregados.push("Colesterol Total"); }
+      }
+      if (!nuevosExamenes.some(item => item.codigo === 'HDLC')) {
+        const hData = await fetchExamenPorCodigo('HDLC');
+        if (hData) { nuevosExamenes.push(hData); agregados.push("HDL"); }
+      }
+      if (!nuevosExamenes.some(item => item.codigo === 'TGCD')) {
+        const tData = await fetchExamenPorCodigo('TGCD');
+        if (tData) { nuevosExamenes.push(tData); agregados.push("Triglicéridos"); }
+      }
+      if (agregados.length > 0) {
+        toastMensaje = `LDL añadido. Se auto-incluyó: ${agregados.join(", ")} (Necesarios para el cálculo).`;
+      }
+    }
+
+    // 🚀 NUEVA REGLA: LIPIDOS TOTALES (LTOTAL) AUTO-INCLUYE COLES (CHOL) Y TRIG (TGCD)
+    if (ex.codigo === 'LTOTAL') {
+      let agregadosLT = [];
+      if (!nuevosExamenes.some(item => item.codigo === 'CHOL')) {
+        const cDataLT = await fetchExamenPorCodigo('CHOL');
+        if (cDataLT) { nuevosExamenes.push(cDataLT); agregadosLT.push("Colesterol Total"); }
+      }
+      if (!nuevosExamenes.some(item => item.codigo === 'TGCD')) {
+        const tDataLT = await fetchExamenPorCodigo('TGCD');
+        if (tDataLT) { nuevosExamenes.push(tDataLT); agregadosLT.push("Triglicéridos"); }
+      }
+      if (agregadosLT.length > 0) {
+        toastMensaje = `Lípidos Totales añadido. Se auto-incluyó: ${agregadosLT.join(" y ")} (Necesarios para el cálculo).`;
+      }
+    }
     // Reglas de negocio (PTF, HI, ROMA, UDC)
     if (ex.codigo === 'PTF') {
       const teniaAlbGlob = nuevosExamenes.some(i => i.codigo === 'ALB' || i.codigo === 'GBL');
