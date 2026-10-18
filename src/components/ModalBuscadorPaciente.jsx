@@ -260,14 +260,14 @@ export default function ModalBuscadorPaciente({ onClose }) {
     let telefonoFormateado = resultado.telefono.replace(/\D/g, '');
     if (telefonoFormateado.startsWith('0')) telefonoFormateado = '593' + telefonoFormateado.substring(1);
     
-    const mensaje = `Hola ${resultado.nombre},\nSomos *Laboratorio Clínico TRIDLAB*.\n\nSus credenciales para descargar sus resultados en nuestro portal web son:\n\n👤 *Cédula:* ${resultado.cedula}\n🔑 *PIN Web:* ${resultado.pin_secreto}\n\n🌐 Ingrese aquí: https://cotizador-trid.vercel.app\n\n¡Gracias por confiar en nosotros!`;
+    const mensaje = `Hola ${resultado.nombre},\nSomos *Laboratorio Clínico TRIDLAB*.\n\nSus credenciales para descargar sus resultados en nuestro portal web son:\n\n👤 *Cédula:* ${resultado.cedula}\n🔑 *PIN Web:* ${resultado.pin_secreto}\n\n🌐 Ingrese aquí: https://www.tridlab.com.ec/resultados\n\n¡Gracias por confiar en nosotros!`;
     window.open(`https://wa.me/${telefonoFormateado}?text=${encodeURIComponent(mensaje)}`, "_blank");
   }
 
   function enviarCorreo() {
     if (!resultado?.correo) return toast.error("El paciente no tiene correo registrado.");
     const asunto = "Credenciales Portal de Resultados - TRIDLAB";
-    const cuerpo = `Hola ${resultado.nombre},\n\nSomos Laboratorio Clínico TRIDLAB. Sus credenciales para descargar sus resultados en nuestro portal web son:\n\nCédula: ${resultado.cedula}\nPIN Web: ${resultado.pin_secreto}\n\nIngrese al portal en el siguiente enlace: https://cotizador-trid.vercel.app\n\n¡Gracias por confiar en nosotros!`;
+    const cuerpo = `Hola ${resultado.nombre},\n\nSomos Laboratorio Clínico TRIDLAB. Sus credenciales para descargar sus resultados en nuestro portal web son:\n\nCédula: ${resultado.cedula}\nPIN Web: ${resultado.pin_secreto}\n\nIngrese al portal en el siguiente enlace: https://www.tridlab.com.ec/resultados\n\n¡Gracias por confiar en nosotros!`;
     window.location.href = `mailto:${resultado.correo}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
   }
 
