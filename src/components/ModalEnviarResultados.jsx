@@ -55,7 +55,7 @@ export default function ModalEnviarResultados({ isOpen, onClose, orden, resultad
 
   // Generador del mensaje
   const generarCuerpoMensaje = () => {
-    return `🔬 *LABORATORIO CLÍNICO TRIDLAB*\n\nHola *${contacto.nombreDestino}*,\nLe informamos que los resultados *${tipoReporte}* del paciente *${orden.paciente_nombre}* ya están listos para ser visualizados.\n\n📄 *Nº de Orden:* ${orden.codigo_orden}\n\nIngresa a nuestro portal web oficial para descargar el PDF:\n👉 https://cotizador-trid.vercel.app\n\n_¡Gracias por confiar en nosotros!_`;
+    return `🔬 *LABORATORIO CLÍNICO TRIDLAB*\n\nHola *${contacto.nombreDestino}*,\nLe informamos que los resultados *${tipoReporte}* del paciente *${orden.paciente_nombre}* ya están listos para ser visualizados.\n\n📄 *Nº de Orden:* ${orden.codigo_orden}\n\nIngresa a nuestro portal web oficial para descargar el PDF:\n👉 https://www.tridlab.com.ec/resultados\n\n_¡Gracias por confiar en nosotros!_`;
   };
 
   async function registrarEnvio(campo) {
